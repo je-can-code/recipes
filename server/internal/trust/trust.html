@@ -138,6 +138,19 @@
         margin-top: 1.5rem;
         color: var(--muted);
       }
+
+      /* commands wrap anywhere, so a long one never pushes the page sideways on a phone. */
+      code
+      {
+        display: block;
+        margin: 0.4rem 0;
+        padding: 0.5rem 0.65rem;
+        border-radius: 0.5rem;
+        background: var(--background);
+        font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 0.85rem;
+        overflow-wrap: anywhere;
+      }
     </style>
   </head>
   <body>
@@ -156,7 +169,11 @@
       <details open>
         <summary>iPhone and iPad</summary>
         <ol>
-          <li>Tap <b>Download the certificate</b> above, then <b>Allow</b>.</li>
+          <li>
+            Open this page in <b>Safari</b>, even if you browse in Brave or Chrome, then tap
+            <b>Download the certificate</b> above and <b>Allow</b>. Once it's trusted, every browser on the
+            device trusts it.
+          </li>
           <li>
             Open <b>Settings</b> and tap <b>Profile Downloaded</b> near the top (or find it under <b>General</b>,
             <b>VPN &amp; Device Management</b>). Tap <b>Install</b>, enter your passcode, and tap <b>Install</b>
@@ -188,6 +205,22 @@
           <li>Click <b>Download the certificate</b> above, then open the file and click <b>Install Certificate</b>.</li>
           <li>Choose <b>Current User</b>, then <b>Place all certificates in the following store</b>.</li>
           <li>Browse to <b>Trusted Root Certification Authorities</b>, finish, and say <b>Yes</b> to the warning.</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>Linux, in Vivaldi, Chrome, Chromium or Brave</summary>
+        <ol>
+          <li>Click <b>Download the certificate</b> above.</li>
+          <li>
+            In a terminal, install the tool that adds certificates to the browser, if it isn't there yet:
+            <code>sudo apt install libnss3-tools</code>
+          </li>
+          <li>
+            Add the certificate:
+            <code>certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "{{.AuthorityName}}" -i ~/Downloads/recipes-ca.crt</code>
+          </li>
+          <li>Quit the browser completely, then open it again.</li>
         </ol>
       </details>
 
