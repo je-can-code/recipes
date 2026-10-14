@@ -2,6 +2,11 @@
 recipesFolder: /mnt/exdrive/docs/recipes
 
 # Where the site listens. 0.0.0.0 lets phones and tablets on the same Wi-Fi reach it, and port 80 means the
-# address needs no port number: http://j-desktop.local. Linux keeps ports below 1024 for admins unless told
-# otherwise, and /etc/sysctl.d/60-recipes-port-80.conf is what tells it to let ordinary programs use 80.
+# address needs no port number. Linux keeps ports below 1024 for admins unless told otherwise, and
+# /etc/sysctl.d/60-recipes-port-80.conf is what tells it to let ordinary programs use 80.
 listen: 0.0.0.0:80
+
+# The site's own name on the Wi-Fi, so the address is http://recipes.local. While the site runs, Avahi (the
+# program that already answers for j-desktop.local) answers for this name too, and j-desktop.local keeps
+# working. It has to be one word and .local, since phones and laptops won't look up anything longer.
+name: recipes.local

@@ -10,7 +10,9 @@ import (
 
 // run owes a script an honest exit code: 0 only when every card is clean, 1 for any problem or failure,
 // and 2 for a command or flag it doesn't know. check is meant to sit in front of anything that trusts the
-// recipes folder, so a 0 that hides a broken card defeats the point of having it.
+// recipes folder, so a 0 that hides a broken card defeats the point of having it. servesOtherDevices owes
+// serve a straight answer about who can reach the site, since a development copy that announced the name
+// would collide with the always-on copy that holds it.
 
 // cleanCard is a card that passes every rule.
 const cleanCard = `title: Test Gravy
@@ -161,6 +163,76 @@ func TestServeListensWhereTheFlagSays(t *testing.T) {
 	// Assert.
 	if code != 1 || strings.HasSuffix(stdout, "at http://127.0.0.1:99999\n") == false {
 		t.Fatalf("got %d %q", code, stdout)
+	}
+}
+
+// TestServesOtherDevicesOnEveryNetwork covers 0.0.0.0, the address the always-on copy listens on.
+func TestServesOtherDevicesOnEveryNetwork(t *testing.T) {
+	// Arrange.
+	address := "0.0.0.0:80"
+
+	// Act.
+	reachable := servesOtherDevices(address)
+
+	// Assert.
+	if reachable == false {
+		t.Fatalf("%s isn't reachable, expected it to be", address)
+	}
+}
+
+// TestServesOtherDevicesWithNoHost covers an address with only a port, which listens everywhere.
+func TestServesOtherDevicesWithNoHost(t *testing.T) {
+	// Arrange.
+	address := ":80"
+
+	// Act.
+	reachable := servesOtherDevices(address)
+
+	// Assert.
+	if reachable == false {
+		t.Fatalf("%s isn't reachable, expected it to be", address)
+	}
+}
+
+// TestServesNoOtherDevicesOnLoopback covers 127.0.0.1, the address development listens on.
+func TestServesNoOtherDevicesOnLoopback(t *testing.T) {
+	// Arrange.
+	address := "127.0.0.1:8686"
+
+	// Act.
+	reachable := servesOtherDevices(address)
+
+	// Assert.
+	if reachable {
+		t.Fatalf("%s is reachable, expected it not to be", address)
+	}
+}
+
+// TestServesNoOtherDevicesOnLocalhost covers localhost, loopback by name.
+func TestServesNoOtherDevicesOnLocalhost(t *testing.T) {
+	// Arrange.
+	address := "localhost:8686"
+
+	// Act.
+	reachable := servesOtherDevices(address)
+
+	// Assert.
+	if reachable {
+		t.Fatalf("%s is reachable, expected it not to be", address)
+	}
+}
+
+// TestServesNoOtherDevicesOnAnAddressItCantRead covers an address with no port, which can't be listened on.
+func TestServesNoOtherDevicesOnAnAddressItCantRead(t *testing.T) {
+	// Arrange.
+	address := "0.0.0.0"
+
+	// Act.
+	reachable := servesOtherDevices(address)
+
+	// Assert.
+	if reachable {
+		t.Fatalf("%s is reachable, expected it not to be", address)
 	}
 }
 

@@ -5,13 +5,16 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"strings"
 
+	"recipes/server/internal/announce"
 	"recipes/server/internal/api"
 	"recipes/server/internal/cards"
 	"recipes/server/internal/config"
@@ -81,16 +84,45 @@ func check(settings config.Config, stdout io.Writer, stderr io.Writer) int {
 	return 0
 }
 
-// serve runs the site until the process stops. ListenAndServe only ever returns with an error, such as
-// the address already being taken, so reaching the end of this means the site couldn't start or stay up.
+// serve runs the site until the process stops. Serve only ever returns with an error, so reaching the end
+// of this means the site couldn't start, as when the address is already taken, or couldn't stay up.
 func serve(settings config.Config, stdout io.Writer, stderr io.Writer) int {
 	shelf := cards.NewShelf(settings.RecipesFolder)
 	routes := api.Routes(shelf, site.Handler(site.Files()))
 
 	fmt.Fprintf(stdout, "Serving the recipes in %s at http://%s\n", settings.RecipesFolder, settings.Listen)
-	err := http.ListenAndServe(settings.Listen, routes)
+	listener, err := net.Listen("tcp", settings.Listen)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+
+	// the name goes out only once the site can answer to it, and only when other devices can reach the
+	// site at all, which also keeps development from claiming the name the always-on copy holds.
+	if settings.Name != "" && servesOtherDevices(settings.Listen) {
+		announcer := announce.New(settings.Name, &announce.DBus{}, stdout, stderr)
+		go announcer.Run(context.Background())
+	}
+
+	err = http.Serve(listener, routes)
 	fmt.Fprintln(stderr, err)
 	return 1
+}
+
+// servesOtherDevices reports whether a site listening on address can be reached from other devices. Only
+// loopback can't be: 127.0.0.1, ::1 and localhost all lead back to this machine alone.
+func servesOtherDevices(address string) bool {
+	host, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return false
+	}
+	if host == "localhost" {
+		return false
+	}
+
+	// an empty host listens everywhere, and a host name isn't an IP, so neither can be loopback.
+	ip := net.ParseIP(host)
+	return ip == nil || ip.IsLoopback() == false
 }
 
 // count words a number of things, singular for exactly one.

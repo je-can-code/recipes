@@ -6,8 +6,9 @@ No ads, no life stories, just the recipe.
 
 ## Running it
 
-The site runs all the time as a user service named `recipes`, at **http://j-desktop.local** for any phone
-or tablet on the same Wi-Fi. It starts with the desktop and needs nobody logged in.
+The site runs all the time as a user service named `recipes`, at **http://recipes.local** for any phone
+or tablet on the same Wi-Fi (http://j-desktop.local reaches it too). It starts with the desktop and needs
+nobody logged in.
 
 Cards reload on their own: save one and the next page load shows it. Code doesn't, so after changing the
 code, run `bun run deploy` to build everything and restart the service.
@@ -42,7 +43,8 @@ echo 'net.ipv4.ip_unprivileged_port_start=80' | sudo tee /etc/sysctl.d/60-recipe
 
 `enable-linger` starts the service at boot without anyone logging in. The last line lets ordinary programs
 use port 80, which Linux otherwise keeps for admins. The service file and `config.yaml` hold absolute paths
-to this folder and the recipes folder, so update them if either lives somewhere else.
+to this folder and the recipes folder, so update them if either lives somewhere else. The name needs Avahi
+(`avahi-daemon`), which most Linux desktops already run, and no setup of its own.
 
 ## How a page gets to the screen
 
@@ -63,14 +65,27 @@ to this folder and the recipes folder, so update them if either lives somewhere 
 The server compares the cards' sizes and modified times on every request, and reads the folder again
 when anything changed. A new or edited card shows up on the next page load, without a restart.
 
+## How phones find recipes.local
+
+Names ending in `.local` aren't looked up in DNS. A phone asks the whole Wi-Fi "who's recipes.local?",
+and Avahi, the program that already answers for `j-desktop.local`, answers with this machine's address.
+The server asks Avahi to do that once it's listening (`server/internal/announce`), and checks every 10
+seconds that Avahi still is, so the name comes back by itself after a reboot, an Avahi restart or a new
+address from the router. When the server stops, Avahi stops answering.
+
+Only a server other devices can reach announces the name. `bun run dev` listens on `127.0.0.1`, so it
+never claims the name the always-on copy holds. The service's log (`journalctl --user -u recipes`) says
+when the name is announced, and what went wrong if it can't be.
+
 ## Configuration
 
-`config.yaml` holds two settings:
+`config.yaml` holds three settings:
 
 | Key | Meaning |
 |---|---|
 | `recipesFolder` | Where the cards live. A relative path is read from the config file's folder. |
 | `listen` | The address to listen on. This config uses `0.0.0.0:80`; without the setting, it's `0.0.0.0:8686`. |
+| `name` | The site's name on the Wi-Fi, like `recipes.local`. It has to be one word and `.local`, since phones and laptops won't look up a longer one. Without it, nothing is announced, and the site goes by the machine's own name. |
 
 ## Collections and search
 
@@ -90,6 +105,7 @@ partway through, so `beef dinner` finds recipes that are both, and `chori` alrea
 | `server/internal/api` | The JSON API, and routing everything else to the website |
 | `server/internal/site` | Serving the built website from inside the binary |
 | `server/internal/config` | Reading `config.yaml` |
+| `server/internal/announce` | Getting Avahi to answer for the site's name on the Wi-Fi |
 | `service/recipes.service` | The always-on service, copied into `~/.config/systemd/user/` |
 | `scripts/app-icon.html` | The home-screen icon, which the PNGs in `web/public` are screenshots of |
 | `web/src/services` | Search, collection grouping, link handling and the API client, as plain tested functions |
