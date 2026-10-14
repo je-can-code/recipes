@@ -6,21 +6,43 @@ No ads, no life stories, just the recipe.
 
 ## Running it
 
-```bash
-bun install
-bun run build    # checks the types, builds the website, and builds bin/recipes with the site inside it
-bun run start    # serves on port 8686
-```
+The site runs all the time as a user service named `recipes`, at **http://j-desktop.local** for any phone
+or tablet on the same Wi-Fi. It starts with the desktop and needs nobody logged in.
 
-Then open `http://<this machine's address>:8686` on any phone or tablet on the same Wi-Fi.
+Cards reload on their own: save one and the next page load shows it. Code doesn't, so after changing the
+code, run `bun run deploy` to build everything and restart the service.
 
 | Command | What it does |
 |---|---|
-| `bun run dev` | Runs the Go server and Vite together. Open `http://localhost:5173`, and pages reload as you edit. |
+| `bun run deploy` | Builds everything, then restarts the service so it runs the new build. |
+| `bun run dev` | For working on the code: Go on port 8686 and Vite on 5173. Open `http://localhost:5173`, and pages reload as you edit. The service on port 80 keeps running alongside. |
 | `bun run build` | Typechecks, builds the website into the server, then builds `bin/recipes`. |
-| `bun run start` | Runs `bin/recipes` with `config.yaml`. |
 | `bun run check` | Reads every card and lists every problem. Exits 1 if there are any. |
 | `bun run test` | The website's tests, then the server's. |
+| `bun run start` | Runs `bin/recipes` by hand. Stop the service first, since both want port 80. |
+
+Looking after the service:
+
+```bash
+systemctl --user status recipes     # is it up?
+systemctl --user restart recipes    # restart it
+journalctl --user -u recipes -f     # its output, as it happens
+```
+
+### Setting it up on another machine
+
+```bash
+bun install && bun run build
+cp service/recipes.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now recipes
+loginctl enable-linger "$USER"
+echo 'net.ipv4.ip_unprivileged_port_start=80' | sudo tee /etc/sysctl.d/60-recipes-port-80.conf && sudo sysctl -p /etc/sysctl.d/60-recipes-port-80.conf
+```
+
+`enable-linger` starts the service at boot without anyone logging in. The last line lets ordinary programs
+use port 80, which Linux otherwise keeps for admins. The service file and `config.yaml` hold absolute paths
+to this folder and the recipes folder, so update them if either lives somewhere else.
 
 ## How a page gets to the screen
 
@@ -48,7 +70,7 @@ when anything changed. A new or edited card shows up on the next page load, with
 | Key | Meaning |
 |---|---|
 | `recipesFolder` | Where the cards live. A relative path is read from the config file's folder. |
-| `listen` | The address to listen on. Defaults to `0.0.0.0:8686`, which phones on the network can reach. |
+| `listen` | The address to listen on. This config uses `0.0.0.0:80`; without the setting, it's `0.0.0.0:8686`. |
 
 ## Collections and search
 
@@ -68,6 +90,8 @@ partway through, so `beef dinner` finds recipes that are both, and `chori` alrea
 | `server/internal/api` | The JSON API, and routing everything else to the website |
 | `server/internal/site` | Serving the built website from inside the binary |
 | `server/internal/config` | Reading `config.yaml` |
+| `service/recipes.service` | The always-on service, copied into `~/.config/systemd/user/` |
+| `scripts/app-icon.html` | The home-screen icon, which the PNGs in `web/public` are screenshots of |
 | `web/src/services` | Search, collection grouping, link handling and the API client, as plain tested functions |
 | `web/src/pages`, `web/src/components` | The pages and their pieces, kept free of logic |
 | `web/test` | The website's tests |

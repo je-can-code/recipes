@@ -6,6 +6,7 @@
     "dev": "bun run scripts/dev.ts",
     "build": "tsc --noEmit && bunx --bun vite build && cd server && go build -o ../bin/recipes ./cmd/recipes",
     "start": "./bin/recipes",
+    "deploy": "bun run build && systemctl --user restart recipes",
     "check": "cd server && go run ./cmd/recipes check -config ../config.yaml",
     "typecheck": "tsc --noEmit",
     "test": "bun run test:web && bun run test:server",

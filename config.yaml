@@ -1,5 +1,7 @@
 # Where the recipe cards live. A relative path is read from this file's folder.
 recipesFolder: /mnt/exdrive/docs/recipes
 
-# Where the site listens. 0.0.0.0 lets phones and tablets on the same Wi-Fi reach it.
-listen: 0.0.0.0:8686
+# Where the site listens. 0.0.0.0 lets phones and tablets on the same Wi-Fi reach it, and port 80 means the
+# address needs no port number: http://j-desktop.local. Linux keeps ports below 1024 for admins unless told
+# otherwise, and /etc/sysctl.d/60-recipes-port-80.conf is what tells it to let ordinary programs use 80.
+listen: 0.0.0.0:80

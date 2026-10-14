@@ -1,6 +1,7 @@
 /**
  * Runs the site for development: the Go server for the API on port 8686, and Vite on port 5173 for the
  * pages, reloading as files change and passing /api through to Go. Open the Vite one. Ctrl+C stops both.
+ * The always-on copy keeps running on port 80 the whole time, since development never touches that port.
  *
  * The server is built first and then run as itself rather than through go run. go run starts the real
  * server as a child of its own, so stopping go run would leave that child running and holding the port.
@@ -15,7 +16,7 @@ if (build.exitCode !== 0)
   process.exit(1);
 }
 
-const server = Bun.spawn([ './bin/recipes-dev', '-config', 'config.yaml' ], {
+const server = Bun.spawn([ './bin/recipes-dev', '-config', 'config.yaml', '-listen', '127.0.0.1:8686' ], {
   stdout: 'inherit',
   stderr: 'inherit',
 });

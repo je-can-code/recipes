@@ -149,6 +149,21 @@ func TestRunRefusesAnUnknownFlag(t *testing.T) {
 	}
 }
 
+// TestServeListensWhereTheFlagSays covers -listen, which overrides the config's address. The config's
+// address here is a good one, so only the flag's unusable one can make serving fail.
+func TestServeListensWhereTheFlagSays(t *testing.T) {
+	// Arrange.
+	configPath := setUp(t, map[string]string{"test-gravy.yaml": cleanCard}, "127.0.0.1:0")
+
+	// Act.
+	code, stdout, _ := runWith("-config", configPath, "-listen", "127.0.0.1:99999")
+
+	// Assert.
+	if code != 1 || strings.HasSuffix(stdout, "at http://127.0.0.1:99999\n") == false {
+		t.Fatalf("got %d %q", code, stdout)
+	}
+}
+
 // TestServeFailsOnAnAddressItCantUse covers serving, which is the default with no command, on an address
 // that can't be listened on. It has to come back with a failure rather than hang or claim success.
 func TestServeFailsOnAnAddressItCantUse(t *testing.T) {

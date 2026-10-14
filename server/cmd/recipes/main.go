@@ -1,7 +1,7 @@
 // Command recipes serves the cookbook website, or checks every recipe card and says what's wrong.
 //
-//	recipes [-config config.yaml]          serve the site
-//	recipes check [-config config.yaml]    check every card, exiting 1 when any has a problem
+//	recipes [-config config.yaml] [-listen address]    serve the site
+//	recipes check [-config config.yaml]                check every card, exiting 1 when any has a problem
 package main
 
 import (
@@ -39,6 +39,7 @@ func run(arguments []string, stdout io.Writer, stderr io.Writer) int {
 	flags := flag.NewFlagSet("recipes", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	configPath := flags.String("config", "config.yaml", "the config file to read")
+	listen := flags.String("listen", "", "an address to listen on instead of the config's, like 127.0.0.1:8686")
 	if err := flags.Parse(arguments); err != nil {
 		return 2
 	}
@@ -47,6 +48,11 @@ func run(arguments []string, stdout io.Writer, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
+	}
+
+	// development runs beside the always-on copy, so it needs an address of its own without a second config.
+	if *listen != "" {
+		settings.Listen = *listen
 	}
 
 	if command == "check" {
