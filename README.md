@@ -9,7 +9,8 @@ No ads, no life stories, just the recipe.
 The site runs all the time as a user service named `recipes`, at **https://recipes.local** for any phone
 or tablet on the same Wi-Fi (j-desktop.local reaches it too). It starts with the desktop and needs nobody
 logged in. A device's first visit goes to **http://recipes.local/trust**, which walks it through trusting
-the site's certificate; see [https](#https) below.
+the site's certificate; see [https](#https) below. After one visit at home, a device keeps its own copy of
+the site and every recipe, so it opens away from home too; see [Away from home](#away-from-home).
 
 Cards reload on their own: save one and the next page load shows it. Code doesn't, so after changing the
 code, run `bun run deploy` to build everything and restart the service.
@@ -18,7 +19,7 @@ code, run `bun run deploy` to build everything and restart the service.
 |---|---|
 | `bun run deploy` | Builds everything, then restarts the service so it runs the new build. |
 | `bun run dev` | For working on the code: Go on port 8686 and Vite on 5173. Open `http://localhost:5173`, and pages reload as you edit. The service on port 80 keeps running alongside. |
-| `bun run build` | Typechecks, builds the website into the server, then builds `bin/recipes`. |
+| `bun run build` | Typechecks, builds the website and its service worker into the server, then builds `bin/recipes`. |
 | `bun run check` | Reads every card and lists every problem. Exits 1 if there are any. |
 | `bun run certs` | Makes the https certificates the first time, and renews the site's certificate after that. Restart the service to use them. |
 | `bun run test` | The website's tests, then the server's. |
@@ -63,6 +64,9 @@ to this folder and the recipes folder, so update them if either lives somewhere 
    what that address shows.
 5. **The browser does the rest.** The app fetches the JSON and draws the page. Search runs in the
    browser over the list it already has, which is why it keeps up with every keystroke.
+6. **A service worker stands in between** on every device. It passes each request to the server and
+   saves what comes back, and answers from that copy when the server can't be reached. See
+   [Away from home](#away-from-home).
 
 The server compares the cards' sizes and modified times on every request, and reads the folder again
 when anything changed. A new or edited card shows up on the next page load, without a restart.
@@ -131,6 +135,40 @@ Only a server other devices can reach announces the name. `bun run dev` listens 
 never claims the name the always-on copy holds. The service's log (`journalctl --user -u recipes`) says
 when the name is announced, and what went wrong if it can't be.
 
+## Away from home
+
+recipes.local only exists on the home Wi-Fi, so anywhere else a phone can't reach the desktop at all. The
+site opens anyway, because every device keeps its own copy of the app and every recipe.
+
+- **A service worker keeps the copy** (`web/src/worker`). It's the part of a site that a browser keeps on
+  the device and runs by itself, between the page and the network. A build's files are saved the first
+  time the build loads, and the catalog and every recipe are saved beside them, so any recipe opens
+  anywhere, even one that was never opened at home.
+- **The desktop goes first.** A page, the catalog or a recipe comes from the desktop when it answers
+  within two seconds, and is saved for later. When it doesn't, the saved copy answers, and for the next
+  five minutes the copy answers straight away, so only the first tap away from home has to wait. The
+  desktop is still asked behind every answer, and as soon as it replies, everything comes from it again.
+- **Opening the list refreshes every saved recipe**, at most once a minute, and forgets the ones whose
+  cards are gone. Checkmarks and timers already live on the device, so cooking needs nothing from the
+  desktop.
+- **New builds reach devices by themselves.** `scripts/build-worker.ts` names each build after its
+  contents and writes that name into `sw.js`. Browsers check `sw.js` whenever the site opens, and a changed
+  one installs the new build and deletes the old one's files. A rebuild that changed nothing keeps its name,
+  so devices have nothing to download.
+- **A recipe that was never saved**, like one added while the device was away, says so instead of
+  showing a blank page.
+
+Development (`bun run dev`) has no service worker, since a copy there would get in the way of Vite
+reloading the pages.
+
+**On an iPhone or iPad, open it from the Home Screen.** Open https://recipes.local in Safari, tap Share,
+then Add to Home Screen, and leave Open as Web App on. Open it once at home, and from then on it opens
+anywhere. That matters for two reasons. Safari clears a website's saved data once about a week of browsing
+has gone by without a visit, but a Home Screen web app only counts the days it's actually used, so its copy
+stays. And other iPhone browsers, Brave among them, may not run service workers in their tabs at all. The
+Home Screen app keeps its own checkmarks and timers, apart from the browser's. An icon added before the
+site moved to https still points at the old address, so replace it.
+
 ## Configuration
 
 `config.yaml` holds five settings:
@@ -167,7 +205,9 @@ partway through, so `beef dinner` finds recipes that are both, and `chori` alrea
 | `certs/` | This machine's certificates and the authority's private key, kept out of git |
 | `service/recipes.service` | The always-on service, copied into `~/.config/systemd/user/` |
 | `scripts/app-icon.html` | The home-screen icon, which the PNGs in `web/public` are screenshots of |
-| `web/src/services` | Search, collection grouping, link handling, the API client, and everything cooking runs on (progress, timers and finding times in a step, the tracker's words, confetti physics, the chime), as plain tested functions |
+| `scripts/build-worker.ts` | Builds the service worker into the site as `sw.js`, after Vite has built the rest, with the build's name and file list written in |
+| `web/src/worker` | The service worker. `policy.ts` and `strategies.ts` decide what's saved and when the copy answers, as plain tested functions, and `sw.ts` connects them to the browser. `tsconfig.worker.json` checks it against a worker's globals rather than a page's |
+| `web/src/services` | Search, collection grouping, link handling, the API client, installing the service worker, and everything cooking runs on (progress, timers and finding times in a step, the tracker's words, confetti physics, the chime), as plain tested functions |
 | `web/src/hooks` | The glue between those services and the browser: loading a recipe, saving progress, ticking timers, the screen wake lock |
 | `web/src/pages`, `web/src/components` | The pages and their pieces, kept free of logic. `CookingRecipe` puts a recipe, its tracker and its confetti together |
 | `web/test` | The website's tests |

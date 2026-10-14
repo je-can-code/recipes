@@ -1,0 +1,10 @@
+{
+  // the service worker, checked against the globals it runs with: no page, no DOM, and no Bun.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": [ "ES2022", "WebWorker" ],
+    "types": []
+  },
+  "include": [ "web/src/worker" ],
+  "exclude": []
+}

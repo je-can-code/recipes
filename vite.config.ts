@@ -25,19 +25,28 @@ const keepGitkeep = (): Plugin =>
   };
 };
 
-export default defineConfig({
-  root: 'web',
-  plugins: [ react(), keepGitkeep() ],
-  build: {
-    outDir,
-    emptyOutDir: true,
-  },
-
-  // while developing, Vite serves the pages and passes /api through to the Go server.
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': 'http://127.0.0.1:8686',
+export default defineConfig(({ command }) =>
+{
+  return {
+    root: 'web',
+    plugins: [ react(), keepGitkeep() ],
+    build: {
+      outDir,
+      emptyOutDir: true,
     },
-  },
+
+    // the built site keeps a copy of itself on each device, and the development server doesn't, so the
+    // page has to know which one it is.
+    define: {
+      __BUILT__: JSON.stringify(command === 'build'),
+    },
+
+    // while developing, Vite serves the pages and passes /api through to the Go server.
+    server: {
+      port: 5173,
+      proxy: {
+        '/api': 'http://127.0.0.1:8686',
+      },
+    },
+  };
 });

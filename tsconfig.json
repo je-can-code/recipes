@@ -14,5 +14,9 @@
     "noEmit": true,
     "types": [ "bun-types" ]
   },
-  "include": [ "web/src", "web/test", "scripts", "vite.config.ts", "vitest.config.ts" ]
+  "include": [ "web/src", "web/test", "scripts", "vite.config.ts", "vitest.config.ts" ],
+
+  // the service worker runs without a page, so it's checked against the worker's globals instead of the
+  // page's, by tsconfig.worker.json. The two sets can't be loaded together.
+  "exclude": [ "web/src/worker/sw.ts" ]
 }
