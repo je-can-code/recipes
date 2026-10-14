@@ -1,0 +1,5 @@
+# Where the recipe cards live. A relative path is read from this file's folder.
+recipesFolder: /mnt/exdrive/docs/recipes
+
+# Where the site listens. 0.0.0.0 lets phones and tablets on the same Wi-Fi reach it.
+listen: 0.0.0.0:8686
