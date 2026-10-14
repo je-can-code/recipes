@@ -8,6 +8,7 @@
     "start": "./bin/recipes",
     "deploy": "bun run build && systemctl --user restart recipes",
     "check": "cd server && go run ./cmd/recipes check -config ../config.yaml",
+    "certs": "cd server && go run ./cmd/recipes certs -config ../config.yaml",
     "typecheck": "tsc --noEmit",
     "test": "bun run test:web && bun run test:server",
     "test:web": "vitest run",

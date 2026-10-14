@@ -425,7 +425,10 @@ a
   margin: 0.7rem 0;
 }
 
-/* ingredients: a tap checks one off, like crossing it off a shopping list. */
+/*
+ * ingredients: a tap checks one off. A checked ingredient turns bold rather than crossed out, since it's
+ * on the counter now and still has to be read while the steps call for it.
+ */
 .ingredients
 {
   margin: 0;
@@ -438,7 +441,6 @@ a
   position: relative;
   padding: 0.45rem 0 0.45rem 2.1rem;
   cursor: pointer;
-  transition: color 0.2s ease;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   -webkit-user-select: none;
@@ -477,9 +479,7 @@ a
 
 .ingredients li.ingredient-checked
 {
-  color: var(--muted);
-  text-decoration: line-through;
-  text-decoration-thickness: 1.5px;
+  font-weight: 700;
 }
 
 .ingredients li.ingredient-checked::before
@@ -983,7 +983,6 @@ html:has(.quest)
 {
   .wordmark span,
   .search-box,
-  .ingredients li,
   .ingredients li::before,
   .ingredients li::after,
   .steps li,

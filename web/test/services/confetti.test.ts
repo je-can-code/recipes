@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advance, fire, isGone } from '../../src/services/confetti';
+import { advance, fire, isGone, launch, party, shower } from '../../src/services/confetti';
 import type { Piece } from '../../src/services/confetti';
 
 /**
@@ -7,6 +7,22 @@ import type { Piece } from '../../src/services/confetti';
  * @returns {number} Always 0.5.
  */
 const middle = (): number => 0.5;
+
+/**
+ * A stand-in for Math.random that walks through the given numbers in turn, over and over.
+ * @param {number[]} numbers The numbers to hand out.
+ * @returns {() => number} The stand-in.
+ */
+const sequence = (numbers: number[]): () => number =>
+{
+  let next = 0;
+  return () =>
+  {
+    const number = numbers[next % numbers.length];
+    next++;
+    return number;
+  };
+};
 
 /*
  * fire owes the party a burst from the cannon's mouth, aimed the way it points, in all seven colors.
@@ -43,6 +59,106 @@ describe('fire', () =>
   });
 });
 
+/*
+ * shower owes the party pieces spread across the whole top of the screen, starting just out of sight and
+ * already falling.
+ */
+describe('shower', () =>
+{
+  it('spreads pieces across the width, just above the top, falling', () =>
+  {
+    // Arrange- the first number places each piece across, the second above.
+    const random = sequence([ 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.9, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5 ]);
+
+    // Act.
+    const pieces = shower(500, 2, random);
+
+    // Assert.
+    expect(pieces.map((piece) => [ piece.x, piece.y, piece.speedX, piece.speedY ]))
+      .toEqual([ [ 50, -110, 0, 180 ], [ 450, -110, 0, 180 ] ]);
+  });
+});
+
+/*
+ * launch owes each volley its own source: the left cannon in the bottom-left corner, the right one in the
+ * bottom-right, and the top's shower.
+ */
+describe('launch', () =>
+{
+  it('fires the left cannon from the bottom-left corner, aiming right', () =>
+  {
+    // Arrange.
+    const volley = { at: 0, from: 'left' as const, count: 3 };
+
+    // Act.
+    const pieces = launch(volley, 600, 1000, middle);
+
+    // Assert.
+    expect(pieces.map((piece) => [ piece.x, piece.y, piece.speedX ]))
+      .toEqual([ [ 0, 1000, 632.5 ], [ 0, 1000, 632.5 ], [ 0, 1000, 632.5 ] ]);
+  });
+
+  it('fires the right cannon from the bottom-right corner, aiming left', () =>
+  {
+    // Arrange.
+    const volley = { at: 0, from: 'right' as const, count: 2 };
+
+    // Act.
+    const pieces = launch(volley, 600, 1000, middle);
+
+    // Assert.
+    expect(pieces.map((piece) => [ piece.x, piece.y, piece.speedX ]))
+      .toEqual([ [ 600, 1000, -632.5 ], [ 600, 1000, -632.5 ] ]);
+  });
+
+  it('showers the top volley down from above the screen', () =>
+  {
+    // Arrange.
+    const volley = { at: 0.3, from: 'top' as const, count: 2 };
+
+    // Act.
+    const pieces = launch(volley, 600, 1000, middle);
+
+    // Assert.
+    expect(pieces.map((piece) => [ piece.x, piece.y, piece.speedY ]))
+      .toEqual([ [ 300, -110, 180 ], [ 300, -110, 180 ] ]);
+  });
+});
+
+/*
+ * party owes a finished recipe a real celebration: fifty times the first version's 160 pieces, spread over
+ * a couple of seconds from all three sources.
+ */
+describe('party', () =>
+{
+  it('throws eight thousand pieces in all', () =>
+  {
+    // Arrange.
+    const volleys = party;
+
+    // Act.
+    const total = volleys.reduce((sum, volley) => sum + volley.count, 0);
+
+    // Assert.
+    expect(total)
+      .toBe(8000);
+  });
+
+  it('fires from both cannons and the top, all within two and a half seconds', () =>
+  {
+    // Arrange.
+    const volleys = party;
+
+    // Act.
+    const sources = [ ...new Set(volleys.map((volley) => volley.from)) ].sort();
+    const lastVolley = Math.max(...volleys.map((volley) => volley.at));
+
+    // Assert.
+    expect([ sources, lastVolley ])
+      .toEqual([ [ 'left', 'right', 'top' ], 2.4 ]);
+  });
+});
+
 /**
  * A piece leaving the left cannon, as fire makes it from the middle of every random range.
  * @returns {Piece} The piece.
@@ -64,16 +180,16 @@ describe('advance', () =>
     const piece = launched();
 
     // Act.
-    const moved = advance(piece, 0.1);
+    advance(piece, 0.1);
 
     // Assert.
-    expect(moved.speedX)
+    expect(piece.speedX)
       .toBeCloseTo(562.925);
-    expect(moved.speedY)
+    expect(piece.speedY)
       .toBeCloseTo(-1200.5);
-    expect(moved.x)
+    expect(piece.x)
       .toBeCloseTo(56.2925);
-    expect(moved.y)
+    expect(piece.y)
       .toBeCloseTo(879.95);
   });
 
@@ -83,29 +199,30 @@ describe('advance', () =>
     const piece = { ...launched(), angle: 1, spin: 2, flip: 0 };
 
     // Act.
-    const moved = advance(piece, 0.1);
+    advance(piece, 0.1);
 
     // Assert.
-    expect(moved.angle)
+    expect(piece.angle)
       .toBeCloseTo(1.2);
-    expect(moved.flip)
+    expect(piece.flip)
       .toBeCloseTo(0.9);
   });
 });
 
 /*
- * isGone owes the animation an end: a piece counts as gone once it has fallen out of sight, and never while
- * it's still on its way up from below the screen, which is where every cannon fires from.
+ * isGone owes the animation an end and a lighter load: a piece counts as gone once it has fallen out of
+ * sight, or drifted far off either side, and never while it's still on its way up from below the screen,
+ * which is where every cannon fires from.
  */
 describe('isGone', () =>
 {
   it('is true once a falling piece is out of sight below the screen', () =>
   {
     // Arrange.
-    const piece = { ...launched(), y: 1041, speedY: 300 };
+    const piece = { ...launched(), x: 300, y: 1041, speedY: 300 };
 
     // Act.
-    const gone = isGone(piece, 1000);
+    const gone = isGone(piece, 600, 1000);
 
     // Assert.
     expect(gone)
@@ -115,10 +232,10 @@ describe('isGone', () =>
   it('is false for a falling piece still in sight', () =>
   {
     // Arrange.
-    const piece = { ...launched(), y: 1040, speedY: 300 };
+    const piece = { ...launched(), x: 300, y: 1040, speedY: 300 };
 
     // Act.
-    const gone = isGone(piece, 1000);
+    const gone = isGone(piece, 600, 1000);
 
     // Assert.
     expect(gone)
@@ -128,13 +245,39 @@ describe('isGone', () =>
   it('is false for a piece still rising from below the screen', () =>
   {
     // Arrange.
-    const piece = { ...launched(), y: 1100, speedY: -300 };
+    const piece = { ...launched(), x: 300, y: 1100, speedY: -300 };
 
     // Act.
-    const gone = isGone(piece, 1000);
+    const gone = isGone(piece, 600, 1000);
 
     // Assert.
     expect(gone)
       .toBe(false);
+  });
+
+  it('is true once a piece drifts far off the left', () =>
+  {
+    // Arrange.
+    const piece = { ...launched(), x: -121, y: 500, speedY: -300 };
+
+    // Act.
+    const gone = isGone(piece, 600, 1000);
+
+    // Assert.
+    expect(gone)
+      .toBe(true);
+  });
+
+  it('is true once a piece drifts far off the right, but not just past the edge', () =>
+  {
+    // Arrange.
+    const pieces = [ { ...launched(), x: 721, y: 500 }, { ...launched(), x: 720, y: 500 } ];
+
+    // Act.
+    const gone = pieces.map((piece) => isGone(piece, 600, 1000));
+
+    // Assert.
+    expect(gone)
+      .toEqual([ true, false ]);
   });
 });

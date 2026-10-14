@@ -40,6 +40,60 @@ func TestLoadReadsEverySetting(t *testing.T) {
 	}
 }
 
+// TestLoadAnchorsTheCertificatesAndListensSecurelyOn443 covers a config with a relative certificates folder
+// and no https address, which gets https's usual port.
+func TestLoadAnchorsTheCertificatesAndListensSecurelyOn443(t *testing.T) {
+	// Arrange.
+	path := writeConfig(t, "recipesFolder: /cookbook\ncertificates: certs\n")
+
+	// Act.
+	config, err := Load(path)
+
+	// Assert.
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := filepath.Join(filepath.Dir(path), "certs")
+	if config.Certificates != expected || config.ListenSecure != "0.0.0.0:443" {
+		t.Fatalf("got certificates %q on %q, expected %q on 0.0.0.0:443", config.Certificates, config.ListenSecure, expected)
+	}
+}
+
+// TestLoadKeepsAnAbsoluteCertificatesFolderAndItsAddress covers a config that says exactly where both are.
+func TestLoadKeepsAnAbsoluteCertificatesFolderAndItsAddress(t *testing.T) {
+	// Arrange.
+	path := writeConfig(t, "recipesFolder: /cookbook\ncertificates: /secrets\nlistenSecure: 127.0.0.1:8443\n")
+
+	// Act.
+	config, err := Load(path)
+
+	// Assert.
+	if err != nil {
+		t.Fatal(err)
+	}
+	if config.Certificates != "/secrets" || config.ListenSecure != "127.0.0.1:8443" {
+		t.Fatalf("got certificates %q on %q", config.Certificates, config.ListenSecure)
+	}
+}
+
+// TestLoadLeavesHttpsOffWithoutCertificates covers a config with no certificates, which gets no https
+// address either, so nothing goes looking for one.
+func TestLoadLeavesHttpsOffWithoutCertificates(t *testing.T) {
+	// Arrange.
+	path := writeConfig(t, "recipesFolder: /cookbook\nlisten: 127.0.0.1:9000\n")
+
+	// Act.
+	config, err := Load(path)
+
+	// Assert.
+	if err != nil {
+		t.Fatal(err)
+	}
+	if config.Certificates != "" || config.ListenSecure != "" || config.Listen != "127.0.0.1:9000" {
+		t.Fatalf("got %+v", config)
+	}
+}
+
 // TestLoadRefusesANameWithMoreThanTwoParts covers a name like recipes.j-desktop.local, which Linux won't
 // look up at all.
 func TestLoadRefusesANameWithMoreThanTwoParts(t *testing.T) {

@@ -1,25 +1,40 @@
-// Command recipes serves the cookbook website, or checks every recipe card and says what's wrong.
+// Command recipes serves the cookbook website, checks every recipe card and says what's wrong, or makes
+// the certificates that put the site on https.
 //
 //	recipes [-config config.yaml] [-listen address]    serve the site
 //	recipes check [-config config.yaml]                check every card, exiting 1 when any has a problem
+//	recipes certs [-config config.yaml]                make or renew the https certificates
 package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
+	"slices"
 	"strings"
+	"time"
 
 	"recipes/server/internal/announce"
 	"recipes/server/internal/api"
 	"recipes/server/internal/cards"
+	"recipes/server/internal/certs"
 	"recipes/server/internal/config"
 	"recipes/server/internal/site"
+	"recipes/server/internal/trust"
 )
+
+// readHeaderTimeout is how long a visitor gets to send a request's headers before the server gives up on
+// it, so a connection that never finishes can't sit there forever.
+const readHeaderTimeout = 10 * time.Second
+
+// machineName is this machine's own name, like j-desktop. It's os.Hostname everywhere but the tests.
+var machineName = os.Hostname
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
@@ -34,8 +49,8 @@ func run(arguments []string, stdout io.Writer, stderr io.Writer) int {
 		command = arguments[0]
 		arguments = arguments[1:]
 	}
-	if command != "serve" && command != "check" {
-		fmt.Fprintf(stderr, "There's no %q command. Use serve or check.\n", command)
+	if command != "serve" && command != "check" && command != "certs" {
+		fmt.Fprintf(stderr, "There's no %q command. Use serve, check or certs.\n", command)
 		return 2
 	}
 
@@ -58,8 +73,11 @@ func run(arguments []string, stdout io.Writer, stderr io.Writer) int {
 		settings.Listen = *listen
 	}
 
-	if command == "check" {
+	switch command {
+	case "check":
 		return check(settings, stdout, stderr)
+	case "certs":
+		return makeCertificates(settings, time.Now(), stdout, stderr)
 	}
 	return serve(settings, stdout, stderr)
 }
@@ -84,11 +102,76 @@ func check(settings config.Config, stdout io.Writer, stderr io.Writer) int {
 	return 0
 }
 
-// serve runs the site until the process stops. Serve only ever returns with an error, so reaching the end
+// makeCertificates makes the site's certificate authority if there isn't one yet, then issues the site a
+// fresh certificate for its name, this machine's own name and localhost. Running it again renews the
+// site's certificate under the same authority, so a device that trusts the site already needs nothing new.
+func makeCertificates(settings config.Config, now time.Time, stdout io.Writer, stderr io.Writer) int {
+	if settings.Certificates == "" {
+		fmt.Fprintln(stderr, "The config needs a certificates folder to keep them in, like certificates: certs")
+		return 1
+	}
+
+	// a machine that won't say its name still gets a certificate for the site's name and localhost.
+	machine, err := machineName()
+	if err != nil {
+		machine = ""
+	}
+	names := siteNames(settings.Name, machine)
+	issued, err := certs.Issue(settings.Certificates, authorityName(machine), names, now)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+
+	if issued.MadeAuthority {
+		fmt.Fprintf(stdout, "Made a certificate authority: %s\n", filepath.Join(settings.Certificates, certs.AuthorityFile))
+	}
+	fmt.Fprintf(stdout, "Made the site's certificate for %s, good until %s.\n", strings.Join(issued.Names, ", "), issued.Expires.Format("2006-01-02"))
+	if issued.MadeAuthority {
+		fmt.Fprintf(stdout, "Restart the site, then open http://%s/trust on each device to trust it.\n", names[0])
+		return 0
+	}
+	fmt.Fprintln(stdout, "Restart the site to use it. Devices that already trust the site need nothing new.")
+	return 0
+}
+
+// siteNames lists the names the site's certificate covers, without repeats: the site's own name, this
+// machine's .local name, and localhost.
+func siteNames(name string, machine string) []string {
+	candidates := []string{name, "localhost"}
+	if machine != "" {
+		candidates = []string{name, strings.TrimSuffix(machine, ".local") + ".local", "localhost"}
+	}
+
+	names := []string{}
+	for _, candidate := range candidates {
+		if candidate != "" && slices.Contains(names, candidate) == false {
+			names = append(names, candidate)
+		}
+	}
+	return names
+}
+
+// authorityName is what the certificate authority calls itself, which is how each device's settings list
+// it, so it says whose recipes it's for.
+func authorityName(machine string) string {
+	if machine == "" {
+		return "Recipes"
+	}
+	return fmt.Sprintf("Recipes on %s", strings.TrimSuffix(machine, ".local"))
+}
+
+// serve runs the site until the process stops. Serving only ever ends with an error, so reaching the end
 // of this means the site couldn't start, as when the address is already taken, or couldn't stay up.
 func serve(settings config.Config, stdout io.Writer, stderr io.Writer) int {
 	shelf := cards.NewShelf(settings.RecipesFolder)
 	routes := api.Routes(shelf, site.Handler(site.Files()))
+
+	// https only means something to other devices, and leaving it out on loopback also keeps development
+	// off the https port the always-on copy holds.
+	if settings.Certificates != "" && servesOtherDevices(settings.Listen) {
+		return serveSecurely(settings, routes, stdout, stderr)
+	}
 
 	fmt.Fprintf(stdout, "Serving the recipes in %s at http://%s\n", settings.RecipesFolder, settings.Listen)
 	listener, err := net.Listen("tcp", settings.Listen)
@@ -96,17 +179,85 @@ func serve(settings config.Config, stdout io.Writer, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
+	announceName(settings, stdout, stderr)
 
-	// the name goes out only once the site can answer to it, and only when other devices can reach the
-	// site at all, which also keeps development from claiming the name the always-on copy holds.
-	if settings.Name != "" && servesOtherDevices(settings.Listen) {
-		announcer := announce.New(settings.Name, &announce.DBus{}, stdout, stderr)
-		go announcer.Run(context.Background())
+	server := &http.Server{Handler: routes, ReadHeaderTimeout: readHeaderTimeout}
+	fmt.Fprintln(stderr, server.Serve(listener))
+	return 1
+}
+
+// serveSecurely runs the site on https, with plain http beside it sending visitors over, except for the
+// page and the download a new device needs to trust the site. When either one stops, the whole server
+// stops, and the service starts it again.
+func serveSecurely(settings config.Config, routes http.Handler, stdout io.Writer, stderr io.Writer) int {
+	certificate, err := tls.LoadX509KeyPair(
+		filepath.Join(settings.Certificates, certs.SiteFile),
+		filepath.Join(settings.Certificates, certs.SiteKeyFile),
+	)
+	if err != nil {
+		fmt.Fprintf(stderr, "Couldn't load the site's certificate from %s: %v. Run `bun run certs` to make one.\n", settings.Certificates, err)
+		return 1
+	}
+	expires, err := certs.Expiry(settings.Certificates)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	_, securePort, err := net.SplitHostPort(settings.ListenSecure)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	plainRoutes, err := trust.Routes(filepath.Join(settings.Certificates, certs.AuthorityFile), securePort)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
 	}
 
-	err = http.Serve(listener, routes)
-	fmt.Fprintln(stderr, err)
+	fmt.Fprintf(stdout, "Serving the recipes in %s at https://%s, with http://%s sending visitors there\n",
+		settings.RecipesFolder, settings.ListenSecure, settings.Listen)
+	fmt.Fprintf(stdout, "The site's certificate is good until %s. Run `bun run certs` before then to renew it.\n",
+		expires.Format("2006-01-02"))
+
+	secureListener, err := net.Listen("tcp", settings.ListenSecure)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	plainListener, err := net.Listen("tcp", settings.Listen)
+	if err != nil {
+		secureListener.Close()
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	announceName(settings, stdout, stderr)
+
+	stopped := make(chan error, 2)
+	go func() {
+		secure := &http.Server{
+			Handler:           routes,
+			ReadHeaderTimeout: readHeaderTimeout,
+			TLSConfig:         &tls.Config{Certificates: []tls.Certificate{certificate}, MinVersion: tls.VersionTLS12},
+		}
+		stopped <- secure.ServeTLS(secureListener, "", "")
+	}()
+	go func() {
+		plain := &http.Server{Handler: plainRoutes, ReadHeaderTimeout: readHeaderTimeout}
+		stopped <- plain.Serve(plainListener)
+	}()
+	fmt.Fprintln(stderr, <-stopped)
 	return 1
+}
+
+// announceName gets Avahi answering for the site's name, once the site can answer to it. It only does so
+// for a site other devices can reach, which also keeps development from claiming the name the always-on
+// copy holds.
+func announceName(settings config.Config, stdout io.Writer, stderr io.Writer) {
+	if settings.Name == "" || servesOtherDevices(settings.Listen) == false {
+		return
+	}
+	announcer := announce.New(settings.Name, &announce.DBus{}, stdout, stderr)
+	go announcer.Run(context.Background())
 }
 
 // servesOtherDevices reports whether a site listening on address can be reached from other devices. Only
