@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { RecipeArticle } from '../components/RecipeArticle';
+import { CookingRecipe } from '../components/CookingRecipe';
 import { StatusMessage } from '../components/StatusMessage';
 import { Wordmark } from '../components/Wordmark';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -38,7 +38,7 @@ const RecipePage = (): React.JSX.Element =>
   };
 
   return (
-    <div className="page">
+    <div className="page page-recipe">
       <header className="page-header">
         <Wordmark size="small" />
       </header>
@@ -52,7 +52,7 @@ const RecipePage = (): React.JSX.Element =>
             <Link to="/">Back to every recipe</Link>
           </div>
         )}
-        {state.status === 'ready' && <RecipeArticle recipe={state.recipe} />}
+        {state.status === 'ready' && <CookingRecipe key={state.recipe.slug} recipe={state.recipe} />}
       </main>
     </div>
   );

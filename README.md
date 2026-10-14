@@ -65,6 +65,29 @@ to this folder and the recipes folder, so update them if either lives somewhere 
 The server compares the cards' sizes and modified times on every request, and reads the folder again
 when anything changed. A new or edited card shows up on the next page load, without a restart.
 
+## Cooking from a recipe
+
+A recipe page is built to cook along with, not just to read:
+
+- **Tap to check things off.** An ingredient gets ticked and crossed out; a step fades back with a tick in
+  its number. The next step to do waits in a highlighted card with its number glowing.
+- **The quest tracker** is pinned to the bottom: the next step's lead (tap it to scroll there), a rainbow
+  bar that fills as steps get done, and a way to start over. Finishing the last step throws a confetti
+  party, once; reopening a finished recipe just shows it finished.
+- **Every time in the method is a timer.** "8 to 10 minutes" becomes a button, and tapping it starts a
+  countdown for the low end of the range, named after its step. Running timers ride along in the tracker,
+  soonest first, and chime when they're done.
+- **On a tablet**, the ingredients get a column of their own that stays put while the steps scroll.
+
+All of it is kept in the browser, per recipe, in localStorage, so a reload or a trip to another page picks
+up where the cook left off. Progress goes stale after a day, and a timer is forgotten an hour after it
+rang. Nothing about cooking reaches the server, and nothing in it changes the cards.
+
+**Two limits come from the browser, not the site.** Keeping the screen on uses the Screen Wake Lock API,
+which browsers only allow on secure pages (https, or localhost), so over plain `http://recipes.local` the
+screen dims as usual and the tracker's "screen on" marker never shows. And a phone that locks pauses the
+page, so a timer that ends while it's locked chimes the moment the phone is unlocked rather than on time.
+
 ## How phones find recipes.local
 
 Names ending in `.local` aren't looked up in DNS. A phone asks the whole Wi-Fi "who's recipes.local?",
@@ -108,6 +131,7 @@ partway through, so `beef dinner` finds recipes that are both, and `chori` alrea
 | `server/internal/announce` | Getting Avahi to answer for the site's name on the Wi-Fi |
 | `service/recipes.service` | The always-on service, copied into `~/.config/systemd/user/` |
 | `scripts/app-icon.html` | The home-screen icon, which the PNGs in `web/public` are screenshots of |
-| `web/src/services` | Search, collection grouping, link handling and the API client, as plain tested functions |
-| `web/src/pages`, `web/src/components` | The pages and their pieces, kept free of logic |
+| `web/src/services` | Search, collection grouping, link handling, the API client, and everything cooking runs on (progress, timers and finding times in a step, the tracker's words, confetti physics, the chime), as plain tested functions |
+| `web/src/hooks` | The glue between those services and the browser: loading a recipe, saving progress, ticking timers, the screen wake lock |
+| `web/src/pages`, `web/src/components` | The pages and their pieces, kept free of logic. `CookingRecipe` puts a recipe, its tracker and its confetti together |
 | `web/test` | The website's tests |
