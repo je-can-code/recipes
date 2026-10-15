@@ -203,6 +203,7 @@ partway through, so `beef dinner` finds recipes that are both, and `chori` alrea
 | `server/internal/certs` | Making the certificate authority and the site's certificate |
 | `server/internal/trust` | The plain-http side: the trust page, the authority download, and the redirect to https |
 | `certs/` | This machine's certificates and the authority's private key, kept out of git |
+| `docs/writing-cards.md` | How a card should read, beyond what `_template.yaml` defines: the voice, the kitchen and tastes the cards are written for, and how to write a batch of them |
 | `service/recipes.service` | The always-on service, copied into `~/.config/systemd/user/` |
 | `scripts/app-icon.html` | The home-screen icon, which the PNGs in `web/public` are screenshots of |
 | `scripts/build-worker.ts` | Builds the service worker into the site as `sw.js`, after Vite has built the rest, with the build's name and file list written in |
