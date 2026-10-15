@@ -1,35 +1,35 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import { Icon } from './Icons';
 
 /**
- * What the search box shows, what to do as it changes, and whether it takes focus when it appears.
+ * What the search box shows, and what to do as it changes.
  */
 interface SearchBoxProps
 {
   value: string;
   onChange: (text: string) => void;
-  autoFocus: boolean;
 }
 
 /**
- * The search box. It never submits anything: searching happens as the typing does.
- * @param {SearchBoxProps} props The value, the change handler, and whether to take focus.
+ * The search box: a pill with a rainbow rim that flows and glows while it's in use. It never submits
+ * anything, since searching happens as the typing does, and once something is typed, a cross clears it.
+ * @param {SearchBoxProps} props The value, and the change handler.
  * @returns {React.JSX.Element} The search box.
  */
-const SearchBox = ({ value, onChange, autoFocus }: SearchBoxProps): React.JSX.Element =>
+const SearchBox = ({ value, onChange }: SearchBoxProps): React.JSX.Element =>
 {
   const input = useRef<HTMLInputElement>(null);
 
-  // arriving from the home page mid-word, the cursor belongs after what was already typed, not before it.
-  useEffect(() =>
+  // clearing hands the cursor straight back, so the next search can start without another tap.
+  const clear = (): void =>
   {
+    onChange('');
     const element = input.current;
-    if (autoFocus === false || element === null)
+    if (element !== null)
     {
-      return;
+      element.focus();
     }
-    element.focus();
-    element.setSelectionRange(element.value.length, element.value.length);
-  }, [ autoFocus ]);
+  };
 
   return (
     <form
@@ -48,7 +48,7 @@ const SearchBox = ({ value, onChange, autoFocus }: SearchBoxProps): React.JSX.El
         ref={input}
         type="search"
         value={value}
-        placeholder="Search by name, tag or collection"
+        placeholder="What are we cooking?"
         aria-label="Search recipes"
         autoComplete="off"
         enterKeyHint="search"
@@ -57,6 +57,11 @@ const SearchBox = ({ value, onChange, autoFocus }: SearchBoxProps): React.JSX.El
           onChange(event.target.value);
         }}
       />
+      {value !== '' && (
+        <button type="button" className="search-clear" aria-label="Clear the search" onClick={clear}>
+          <Icon name="close" />
+        </button>
+      )}
     </form>
   );
 };

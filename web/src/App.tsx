@@ -2,7 +2,7 @@ import { Route, Routes } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { RecipePage } from './pages/RecipePage';
-import { SearchPage } from './pages/SearchPage';
+import { SearchRedirect } from './pages/SearchRedirect';
 
 /**
  * Every page on the site, by address. The Go server answers each of these paths with this same app, so
@@ -14,7 +14,7 @@ const App = (): React.JSX.Element =>
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/search" element={<SearchPage />} />
+      <Route path="/search" element={<SearchRedirect />} />
       <Route path="/recipes/:slug" element={<RecipePage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

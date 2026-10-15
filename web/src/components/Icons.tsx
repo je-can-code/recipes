@@ -7,6 +7,7 @@
  */
 const paths = {
   check: 'M5 12.5l4.5 4.5L19 7.5',
+  chevron: 'M9 5.5l6.5 6.5L9 18.5',
   clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
   close: 'M6 6l12 12M18 6L6 18',
   restart: 'M4 12a8 8 0 1 0 2.5-5.8M4 4v4.5h4.5',

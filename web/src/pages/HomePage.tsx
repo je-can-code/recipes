@@ -1,107 +1,142 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { CourseList } from '../components/CourseList';
 import { ProblemsBanner } from '../components/ProblemsBanner';
-import { RecipeLinks } from '../components/RecipeLinks';
 import { SearchBox } from '../components/SearchBox';
 import { ShelfChips } from '../components/ShelfChips';
 import { StatusMessage } from '../components/StatusMessage';
 import { Wordmark } from '../components/Wordmark';
 import { useCatalog } from '../hooks/useCatalog';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import { buildShelves, findShelf, groupByCourse, hueOf } from '../services/shelves';
+import { useOpenCourses } from '../hooks/useOpenCourses';
+import { searchRecipes } from '../services/search';
+import {
+  barBackground,
+  buildShelves,
+  describeCount,
+  groupByCourse,
+  headingFor,
+  homeAddress,
+  homeParameters,
+  isSearching,
+  litShelves,
+  namesPlaces,
+  offersEverything,
+  pageTitle,
+  recipesOn,
+  toggleShelf,
+} from '../services/shelves';
 import type { Shelf } from '../services/shelves';
+import type { RecipeSummary } from '../types';
 
 /**
- * The home page: the name and a search box in the middle of a quiet page, then a chip for every shelf, and
- * the recipes on the shelf showing, split into courses. The address says which shelf is showing, and no
- * shelf named means Home Cooking.
+ * The home page: the name and the search box, a chip for every shelf, and the recipes the lit shelves hold
+ * between them, split into courses. The address holds the lit shelves and the search, so the back button
+ * and a shared link land on the same list. Once something is typed, the top of the page shrinks, keeping the
+ * results above a phone's keyboard.
  * @returns {React.JSX.Element} The home page.
  */
 const HomePage = (): React.JSX.Element =>
 {
-  const navigate = useNavigate();
-  const [ parameters ] = useSearchParams();
+  const [ parameters, setParameters ] = useSearchParams();
+  const query = parameters.get('q') ?? '';
   const state = useCatalog();
+  const [ openCourses, toggleCourse ] = useOpenCourses();
   const shelves = state.status === 'ready' ? buildShelves(state.catalog) : [];
-  const current = findShelf(shelves, parameters);
-  useDocumentTitle(titleFor(current));
+  const lit = litShelves(shelves, parameters.getAll('shelf'));
+  const litKeys = lit.map((shelf) => shelf.key);
+  useDocumentTitle(pageTitle(lit, query));
 
-  // the first letter typed moves to the results page, which carries on filtering as the typing does.
-  const startSearch = (text: string): void =>
+  // every tap and keystroke replaces the address rather than adding to history, or each would need its
+  // own press of the back button.
+  const show = (keys: string[], text: string): void =>
   {
-    navigate(`/search?q=${encodeURIComponent(text)}`);
+    setParameters(homeParameters(keys, text), { replace: true });
   };
 
   return (
-    <main className="home">
+    <main className={query === '' ? 'home' : 'home home-searching'}>
       {state.status === 'ready' && <ProblemsBanner problems={state.catalog.problems} />}
       <div className="home-hero">
-        <Wordmark size="large" />
-        <SearchBox value="" onChange={startSearch} autoFocus={false} />
+        <Wordmark size={query === '' ? 'large' : 'small'} />
+        <SearchBox
+          value={query}
+          onChange={(text) =>
+          {
+            show(litKeys, text);
+          }}
+        />
       </div>
 
       {state.status === 'loading' && <StatusMessage text="Loading the recipes..." isError={false} />}
       {state.status === 'failed' && <StatusMessage text={state.error} isError={true} />}
-      {state.status === 'ready' && <ShelfChips shelves={shelves} current={current} />}
-      {state.status === 'ready' && current === null && <StatusMessage text={noShelf} isError={false} />}
-      {current !== null && <ShelfContents shelf={current} hue={hueOf(shelves.indexOf(current))} />}
+      {state.status === 'ready' && (
+        <ShelfChips
+          shelves={shelves}
+          lit={lit}
+          query={query}
+          onToggle={(key) =>
+          {
+            show(toggleShelf(shelves, litKeys, key), query);
+          }}
+        />
+      )}
+      {state.status === 'ready' && (
+        <ShelfContents
+          shelves={shelves}
+          lit={lit}
+          query={query}
+          recipes={searchRecipes(recipesOn(state.catalog.recipes, lit), query)}
+          openCourses={openCourses}
+          onToggleCourse={toggleCourse}
+        />
+      )}
     </main>
   );
 };
 
 /**
- * The tab's title: the site's name on Home Cooking, and the shelf's name first on any other, so a tab or
- * a bookmark says which shelf it holds.
- * @param {Shelf | null} shelf The shelf showing, or null when the address names one that doesn't exist.
- * @returns {string} The title.
- */
-const titleFor = (shelf: Shelf | null): string =>
-{
-  if (shelf === null || shelf.address === '/')
-  {
-    return 'Recipes';
-  }
-  return `${shelf.name} · Recipes`;
-};
-
-/**
- * What an address naming a shelf that doesn't exist gets instead, with the chips still above it to pick
- * from.
- */
-const noShelf = "There's no shelf at this address. Pick one above.";
-
-/**
- * The shelf to show, and the rainbow color of its chip.
+ * Every shelf, the lit ones, the search, the recipes left to show, and the courses' state.
  */
 interface ShelfContentsProps
 {
-  shelf: Shelf;
-  hue: number;
+  shelves: Shelf[];
+  lit: Shelf[];
+  query: string;
+  recipes: RecipeSummary[];
+  openCourses: string[];
+  onToggleCourse: (heading: string) => void;
 }
 
 /**
- * The shelf's name and count, then its recipes under a heading for each course.
- * @param {ShelfContentsProps} props The shelf, and its color.
- * @returns {React.JSX.Element} The shelf's recipes.
+ * The list's name, beside a bar in the lit chips' colors, and its count, then the recipes by course. When
+ * the lit shelves have nothing matching the search, a link offers the same search over everything.
+ * @param {ShelfContentsProps} props What to show.
+ * @returns {React.JSX.Element} The list.
  */
-const ShelfContents = ({ shelf, hue }: ShelfContentsProps): React.JSX.Element =>
+const ShelfContents = (props: ShelfContentsProps): React.JSX.Element =>
 {
-  const count = shelf.recipes.length === 1 ? '1 recipe' : `${shelf.recipes.length} recipes`;
+  const { shelves, lit, query, recipes, openCourses, onToggleCourse } = props;
+
   return (
     <section className="shelf">
-      <header className={`shelf-header hue-${hue}`}>
-        <h2>{shelf.name}</h2>
-        <p className="shelf-count">{count}</p>
+      <header className="shelf-header">
+        <span className="shelf-bar" style={{ background: barBackground(shelves, lit) }} aria-hidden="true" />
+        <div>
+          <h2>{headingFor(lit)}</h2>
+          <p className="shelf-count">{describeCount(recipes.length, query)}</p>
+          {offersEverything(recipes.length, lit, query) && (
+            <Link className="shelf-widen" to={homeAddress([], query)} replace={true}>Search everything</Link>
+          )}
+        </div>
       </header>
 
-      {groupByCourse(shelf.recipes).map((group) =>
-      {
-        return (
-          <section key={group.heading} className="course">
-            <h3>{group.heading}</h3>
-            <RecipeLinks recipes={group.recipes} showCollection={false} />
-          </section>
-        );
-      })}
+      <CourseList
+        groups={groupByCourse(recipes)}
+        open={openCourses}
+        isSearching={isSearching(query)}
+        showPlace={namesPlaces(lit)}
+        onToggle={onToggleCourse}
+      />
     </section>
   );
 };

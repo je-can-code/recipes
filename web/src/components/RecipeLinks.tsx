@@ -3,13 +3,13 @@ import { placeOf } from '../services/shelves';
 import type { RecipeSummary } from '../types';
 
 /**
- * The recipes to list, and whether each row also names where the recipe lives, which search results need
- * and the home page, already sorted onto shelves, doesn't.
+ * The recipes to list, and whether each row also names where the recipe lives, which a list mixing shelves
+ * needs and a list from one shelf doesn't.
  */
 interface RecipeLinksProps
 {
   recipes: RecipeSummary[];
-  showCollection: boolean;
+  showPlace: boolean;
 }
 
 /**
@@ -17,7 +17,7 @@ interface RecipeLinksProps
  * @param {RecipeLinksProps} props The recipes, and whether to name where they live.
  * @returns {React.JSX.Element} The list.
  */
-const RecipeLinks = ({ recipes, showCollection }: RecipeLinksProps): React.JSX.Element =>
+const RecipeLinks = ({ recipes, showPlace }: RecipeLinksProps): React.JSX.Element =>
 {
   return (
     <ul className="recipe-links">
@@ -25,7 +25,7 @@ const RecipeLinks = ({ recipes, showCollection }: RecipeLinksProps): React.JSX.E
       {
         const details = [ recipe.time, ...recipe.tags ];
         const place = placeOf(recipe);
-        if (showCollection && place !== '')
+        if (showPlace && place !== '')
         {
           details.unshift(place);
         }

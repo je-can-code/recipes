@@ -1,41 +1,48 @@
-import { Link } from 'react-router-dom';
-import { hueOf } from '../services/shelves';
+import { chipCount, hueOf } from '../services/shelves';
 import type { Shelf } from '../services/shelves';
+import { Icon } from './Icons';
 
 /**
- * Every shelf, and the one showing, or null when the address names a shelf that doesn't exist.
+ * Every shelf, the lit ones, what's in the search box, and what a tap on a chip does.
  */
 interface ShelfChipsProps
 {
   shelves: Shelf[];
-  current: Shelf | null;
+  lit: Shelf[];
+  query: string;
+  onToggle: (key: string) => void;
 }
 
 /**
- * A row of chips, one per shelf, each in its own color of the rainbow and carrying its count of recipes.
- * The shelf showing fills in with its color. A tap swaps the address rather than adding to history, the way
- * switching tabs does, so the back button leaves the home page instead of walking back through every shelf
- * looked at on the way.
- * @param {ShelfChipsProps} props Every shelf, and the one showing.
+ * A row of chips, one per shelf, each in its own color of the rainbow and carrying how many of its recipes
+ * match the search, which is all of them until something is typed. A tap lights a chip up, filled with its
+ * color and wearing a little cross, and another tap puts it out. Lit chips combine, and with none lit,
+ * everything shows.
+ * @param {ShelfChipsProps} props The shelves, the lit ones, the search, and the toggle.
  * @returns {React.JSX.Element} The chips.
  */
-const ShelfChips = ({ shelves, current }: ShelfChipsProps): React.JSX.Element =>
+const ShelfChips = ({ shelves, lit, query, onToggle }: ShelfChipsProps): React.JSX.Element =>
 {
   return (
     <nav className="shelf-chips" aria-label="Shelves">
       {shelves.map((shelf, position) =>
       {
+        const isLit = lit.includes(shelf);
         return (
-          <Link
-            key={shelf.address}
-            to={shelf.address}
-            replace={true}
+          <button
+            key={shelf.key}
+            type="button"
             className={`shelf-chip hue-${hueOf(position)}`}
-            aria-current={shelf === current ? 'page' : undefined}
+            aria-pressed={isLit}
+            onClick={() =>
+            {
+              onToggle(shelf.key);
+            }}
           >
             <span>{shelf.label}</span>
-            <span className="shelf-chip-count">{shelf.recipes.length}</span>
-          </Link>
+            <span className="shelf-chip-count">{chipCount(shelf, query)}</span>
+            {isLit && <Icon name="close" />}
+          </button>
         );
       })}
     </nav>

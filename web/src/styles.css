@@ -32,6 +32,11 @@
   --ink-on-bright: #1d1f24;
   --ink-on-deep: #ffffff;
 
+  /* the rainbow twice over, red to red and again, so sliding it half its width along loops without a seam. */
+  --rainbow-loop: linear-gradient(90deg, var(--rainbow-0), var(--rainbow-1), var(--rainbow-2), var(--rainbow-3),
+    var(--rainbow-4), var(--rainbow-5), var(--rainbow-6), var(--rainbow-0), var(--rainbow-1), var(--rainbow-2),
+    var(--rainbow-3), var(--rainbow-4), var(--rainbow-5), var(--rainbow-6), var(--rainbow-0));
+
   color-scheme: light dark;
 }
 
@@ -107,6 +112,7 @@ a
   letter-spacing: -0.03em;
   line-height: 1;
   text-decoration: none;
+  transition: font-size 0.35s ease;
 }
 
 .wordmark span
@@ -138,26 +144,73 @@ a
 .rainbow-5 { color: var(--rainbow-5); transition-delay: 150ms; }
 .rainbow-6 { color: var(--rainbow-6); transition-delay: 180ms; }
 
-/* the search box: a pill that lifts when it's touched. */
+/* the search box: a pill with a rainbow rim, which flows round and glows while the box is in use. The rim
+   is two backgrounds, the page's color over the inside and the looping rainbow under the border. */
 .search-box
 {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.6rem;
   width: 100%;
   max-width: 36rem;
-  padding: 0 1.1rem;
-  border: 1px solid var(--border);
+  padding: 0 0.4rem 0 1.1rem;
+  border: 2px solid transparent;
   border-radius: 999px;
-  background: var(--background);
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  background:
+    linear-gradient(var(--background), var(--background)) padding-box,
+    var(--rainbow-loop) border-box;
+  background-size: 100% 100%, 200% 100%;
+  background-position: 0 0, 0 0;
 }
 
-.search-box:hover,
+/* the glow: the same rainbow, blurred, behind the box, showing while it's in use. */
+.search-box::before
+{
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  bottom: -2px;
+  left: -2px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--rainbow-loop);
+  background-size: 200% 100%;
+  filter: blur(14px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
 .search-box:focus-within
 {
-  border-color: transparent;
-  box-shadow: var(--shadow);
+  animation: rim-flow 2.5s linear infinite;
+}
+
+.search-box:focus-within::before
+{
+  opacity: 0.55;
+  animation: glow-flow 2.5s linear infinite;
+}
+
+@media (hover: hover)
+{
+  .search-box:hover::before
+  {
+    opacity: 0.3;
+  }
+}
+
+@keyframes rim-flow
+{
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 0 0, 100% 0; }
+}
+
+@keyframes glow-flow
+{
+  from { background-position: 0 0; }
+  to { background-position: 100% 0; }
 }
 
 .search-icon
@@ -169,6 +222,12 @@ a
   stroke: var(--muted);
   stroke-width: 2.2;
   stroke-linecap: round;
+  transition: stroke 0.3s ease;
+}
+
+.search-box:focus-within .search-icon
+{
+  stroke: var(--rainbow-4);
 }
 
 /* at 16px or more, phones don't zoom the page when the box takes focus. */
@@ -181,8 +240,41 @@ a
   outline: none;
   background: transparent;
   color: var(--text);
+  caret-color: var(--rainbow-4);
   font: inherit;
   font-size: 1.05rem;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* the box draws its own clear button, so the browser's is put away. */
+.search-box input::-webkit-search-cancel-button,
+.search-box input::-webkit-search-decoration
+{
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search-clear
+{
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.search-clear:hover
+{
+  color: var(--text);
 }
 
 /* the home page: quiet up top like a search engine, the shelves underneath. */
@@ -210,6 +302,14 @@ a
   align-items: center;
   gap: 1.75rem;
   padding: 16vh 0 2.5rem;
+  transition: padding 0.35s ease, gap 0.35s ease;
+}
+
+/* once something is typed, the top shrinks, so the results sit above a phone's keyboard. */
+.home-searching .home-hero
+{
+  gap: 0.85rem;
+  padding: 1.25rem 0 1.5rem;
 }
 
 /* the shelves: one chip per shelf, each its own color of the rainbow, and the shelf showing filled in. */
@@ -241,15 +341,29 @@ a
   border-radius: 999px;
   background: var(--background);
   color: var(--text);
+  font: inherit;
   font-weight: 700;
-  text-decoration: none;
+  cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.shelf-chip:hover
+/* only a real pointer lifts a chip, since a touch screen would leave the last chip tapped hovering. */
+@media (hover: hover)
 {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
+  .shelf-chip:hover
+  {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+}
+
+.shelf-chip .icon
+{
+  width: 0.95em;
+  height: 0.95em;
+  margin-right: 0.15rem;
+  stroke-width: 3;
 }
 
 /* the count rides in a little pill of the chip's own color. */
@@ -265,15 +379,15 @@ a
   text-align: center;
 }
 
-/* the shelf showing fills with its color and gives a little hop, and its count pill turns inside out. */
-.shelf-chip[aria-current="page"]
+/* a lit chip fills with its color and gives a little hop, and its count pill turns inside out. */
+.shelf-chip[aria-pressed="true"]
 {
   background: var(--hue);
   color: var(--hue-ink);
   animation: chip-hop 0.35s ease-out;
 }
 
-.shelf-chip[aria-current="page"] .shelf-chip-count
+.shelf-chip[aria-pressed="true"] .shelf-chip-count
 {
   background: var(--background);
   color: var(--text);
@@ -286,11 +400,19 @@ a
   100% { transform: scale(1); }
 }
 
-/* the shelf's name over its list, marked with its chip's color. */
+/* the list's name, beside a bar in the lit chips' colors, or the whole rainbow when everything shows. */
 .shelf-header
 {
-  padding-left: 0.85rem;
-  border-left: 5px solid var(--hue);
+  display: flex;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.shelf-bar
+{
+  flex: none;
+  width: 5px;
+  border-radius: 3px;
 }
 
 .shelf-header h2
@@ -307,7 +429,98 @@ a
   font-size: 0.95rem;
 }
 
-.course h3,
+.shelf-widen
+{
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-weight: 600;
+}
+
+/* the courses: a row each, with its count in its own rainbow color. Normally each row opens and closes
+   the recipes under it; during a search, every row stays open. */
+.course-heading
+{
+  margin: 0;
+  font: inherit;
+}
+
+.course-row
+{
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0 0.25rem;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.course-toggle
+{
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.course-count
+{
+  min-width: 1.9rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--hue);
+  color: var(--hue-ink);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.course-toggle .icon
+{
+  margin-left: auto;
+  color: var(--muted);
+  transition: transform 0.25s ease;
+}
+
+.course-toggle[aria-expanded="true"] .icon
+{
+  transform: rotate(90deg);
+}
+
+/* a closed course folds its recipes away to nothing, sliding open and shut where the browser can animate
+   it and simply appearing where it can't. */
+.course-body
+{
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+
+.course-body-open
+{
+  grid-template-rows: 1fr;
+}
+
+.course-body-inner
+{
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* the course's row already draws the line a list would start with. */
+.course .recipe-links
+{
+  border-top: none;
+}
+
 .recipe-collection
 {
   margin: 2rem 0 0.5rem;
@@ -359,7 +572,7 @@ a
   font-size: 0.9rem;
 }
 
-/* the header on every page but home: the small wordmark, and the search box on the results page. */
+/* the header on every page but home: the small wordmark. */
 .page-header
 {
   display: flex;
@@ -367,18 +580,6 @@ a
   align-items: center;
   gap: 0.75rem 1rem;
   padding: 1rem 0;
-}
-
-.page-header .search-box
-{
-  flex: 1 1 14rem;
-}
-
-.result-count
-{
-  margin: 0.75rem 0 0.5rem;
-  color: var(--muted);
-  font-size: 0.9rem;
 }
 
 .status
@@ -1084,9 +1285,14 @@ html:has(.quest)
 
 @media (prefers-reduced-motion: reduce)
 {
+  .wordmark,
   .wordmark span,
-  .search-box,
+  .home-hero,
+  .search-box::before,
+  .search-icon,
   .shelf-chip,
+  .course-toggle .icon,
+  .course-body,
   .ingredients li::before,
   .ingredients li::after,
   .steps li,
@@ -1096,10 +1302,12 @@ html:has(.quest)
     transition: none;
   }
 
+  .search-box:focus-within,
+  .search-box:focus-within::before,
   .steps li.step-current .step-number,
   .quest-complete .quest-bar::after,
   .timer-chip-ringing,
-  .shelf-chip[aria-current="page"]
+  .shelf-chip[aria-pressed="true"]
   {
     animation: none;
   }

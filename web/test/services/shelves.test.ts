@@ -1,10 +1,33 @@
 import { describe, expect, it } from 'vitest';
-import { buildShelves, claimOrder, courses, findShelf, groupByCourse, hueOf, placeOf } from '../../src/services/shelves';
+import {
+  barBackground,
+  buildShelves,
+  chipCount,
+  claimOrder,
+  courseBodyId,
+  courses,
+  describeCount,
+  groupByCourse,
+  headingFor,
+  homeAddress,
+  homeParameters,
+  hueOf,
+  isSearching,
+  litShelves,
+  namesPlaces,
+  offersEverything,
+  pageTitle,
+  placeOf,
+  recipesOn,
+  toggleCourse,
+  toggleShelf,
+} from '../../src/services/shelves';
+import type { Shelf } from '../../src/services/shelves';
 import type { Catalog, Game, RecipeSummary } from '../../src/types';
 
 /**
  * Builds a recipe summary with the fields shelves read, and placeholders for the rest.
- * @param {string} slug The recipe's name.
+ * @param {string} slug The recipe's name, which is also its title.
  * @param {string} collection The recipe's collection, or an empty string for the top level.
  * @param {string[]} tags The recipe's tags.
  * @returns {RecipeSummary} The summary.
@@ -26,13 +49,13 @@ const catalogOf = (recipes: RecipeSummary[], games: Game[]): Catalog =>
 };
 
 /**
- * The slugs on each shelf, in order, for comparing whole shelves at once.
- * @param {ReturnType<typeof buildShelves>} shelves The shelves.
- * @returns {string[][]} Each shelf's recipe names.
+ * The slugs in a list of recipes, in order.
+ * @param {RecipeSummary[]} recipes The recipes.
+ * @returns {string[]} Their names.
  */
-const slugsOn = (shelves: ReturnType<typeof buildShelves>): string[][] =>
+const slugsOf = (recipes: RecipeSummary[]): string[] =>
 {
-  return shelves.map((shelf) => shelf.recipes.map((member) => member.slug));
+  return recipes.map((member) => member.slug);
 };
 
 /**
@@ -42,6 +65,24 @@ const games: Game[] = [
   { tag: 'so2', label: 'SO2', name: 'Star Ocean: The Second Story' },
   { tag: 'so1', label: 'SO1', name: 'Star Ocean: First Departure' },
 ];
+
+/**
+ * A small cookbook: one dish of the top level's own, a dish from each game, one from both, one only
+ * tagged like a game (so22 is not so2), and none in a collection, so the chips run Home Cooking, SO2, SO1.
+ */
+const cookbook = [
+  recipe('chorizo-gravy', '', [ 'brunch', 'pork' ]),
+  recipe('fruit-punch', '', [ 'drink', 'game', 'so1' ]),
+  recipe('mystery-stew', '', [ 'dinner', 'game', 'so22' ]),
+  recipe('rice-omelet', '', [ 'dinner', 'egg', 'game', 'so1', 'so2' ]),
+  recipe('sukiyaki', '', [ 'dinner', 'egg', 'game', 'so2' ]),
+];
+
+/**
+ * The cookbook's shelves: Home Cooking, SO2 and SO1, in that order.
+ */
+const shelves = buildShelves(catalogOf(cookbook, games));
+const [ home, so2, so1 ] = shelves;
 
 /*
  * buildShelves owes the home page every shelf in a fixed order, Home Cooking first, and each shelf exactly
@@ -60,11 +101,11 @@ describe('buildShelves', () =>
     ];
 
     // Act.
-    const [ home ] = buildShelves(catalogOf(recipes, []));
+    const [ first ] = buildShelves(catalogOf(recipes, []));
 
     // Assert.
-    expect(home)
-      .toEqual({ address: '/', label: 'Home Cooking', name: 'Home Cooking', recipes: [ recipes[0] ] });
+    expect(first)
+      .toEqual({ key: 'home', label: 'Home Cooking', name: 'Home Cooking', recipes: [ recipes[0] ] });
   });
 
   it('gives each collection a shelf, by name, after Home Cooking', () =>
@@ -78,122 +119,592 @@ describe('buildShelves', () =>
     ];
 
     // Act.
-    const shelves = buildShelves(catalogOf(recipes, []));
+    const built = buildShelves(catalogOf(recipes, []));
 
     // Assert.
-    expect(shelves.map((shelf) => [ shelf.address, shelf.label, shelf.name ]))
+    expect(built.map((shelf) => [ shelf.key, shelf.label, shelf.name, slugsOf(shelf.recipes) ]))
       .toEqual([
-        [ '/', 'Home Cooking', 'Home Cooking' ],
-        [ '/?collection=baking', 'Baking', 'Baking' ],
-        [ '/?collection=cocktails', 'Cocktails', 'Cocktails' ],
+        [ 'home', 'Home Cooking', 'Home Cooking', [ 'chorizo-gravy' ] ],
+        [ 'baking', 'Baking', 'Baking', [ 'scones' ] ],
+        [ 'cocktails', 'Cocktails', 'Cocktails', [ 'mojito', 'margarita' ] ],
       ]);
-    expect(slugsOn(shelves))
-      .toEqual([ [ 'chorizo-gravy' ], [ 'scones' ], [ 'mojito', 'margarita' ] ]);
   });
 
   it('gives each game a shelf, in the games file\'s order, holding every dish with its tag', () =>
   {
-    // Arrange- a dish from both games, one from a collection, and so22, which only looks like so2.
-    const recipes = [
-      recipe('fruit-punch', '', [ 'drink', 'game', 'so1' ]),
-      recipe('rice-omelet', '', [ 'dinner', 'game', 'so1', 'so2' ]),
-      recipe('sake-spritz', 'cocktails', [ 'drink', 'game', 'so2' ]),
-      recipe('mystery-stew', '', [ 'dinner', 'game', 'so22' ]),
-    ];
+    // Arrange- a collection's dish tagged for SO2 joins the cookbook.
+    const recipes = [ ...cookbook, recipe('sake-spritz', 'cocktails', [ 'drink', 'game', 'so2' ]) ];
 
     // Act.
-    const shelves = buildShelves(catalogOf(recipes, games));
+    const built = buildShelves(catalogOf(recipes, games));
 
     // Assert.
-    expect(shelves.map((shelf) => [ shelf.address, shelf.label, shelf.name ]))
+    expect(built.map((shelf) => [ shelf.key, shelf.label, shelf.name, slugsOf(shelf.recipes) ]))
       .toEqual([
-        [ '/', 'Home Cooking', 'Home Cooking' ],
-        [ '/?collection=cocktails', 'Cocktails', 'Cocktails' ],
-        [ '/?game=so2', 'SO2', 'Star Ocean: The Second Story' ],
-        [ '/?game=so1', 'SO1', 'Star Ocean: First Departure' ],
+        [ 'home', 'Home Cooking', 'Home Cooking', [ 'chorizo-gravy' ] ],
+        [ 'cocktails', 'Cocktails', 'Cocktails', [ 'sake-spritz' ] ],
+        [ 'so2', 'SO2', 'Star Ocean: The Second Story', [ 'rice-omelet', 'sukiyaki', 'sake-spritz' ] ],
+        [ 'so1', 'SO1', 'Star Ocean: First Departure', [ 'fruit-punch', 'rice-omelet' ] ],
       ]);
-    expect(slugsOn(shelves))
-      .toEqual([ [], [ 'sake-spritz' ], [ 'rice-omelet', 'sake-spritz' ], [ 'fruit-punch', 'rice-omelet' ] ]);
   });
 });
 
 /*
- * findShelf owes the home page the shelf its address names, so a chip's link, the back button and a
- * shared link all land on the same shelf, and owes a plain "nothing" for an address naming no real shelf,
- * rather than quietly showing a different one.
+ * litShelves owes the page the shelves the address lights, in chip order whatever order the address
+ * names them in, and passes quietly over a key that names nothing.
  */
-describe('findShelf', () =>
+describe('litShelves', () =>
 {
-  const shelves = buildShelves(catalogOf([ recipe('mojito', 'cocktails', [ 'drink' ]) ], games));
-
-  it('finds Home Cooking when the address names no shelf', () =>
+  it('lights the shelves the keys name, in chip order', () =>
   {
-    // Arrange.
-    const parameters = new URLSearchParams('');
+    // Arrange- the keys come in the opposite order to the chips.
+    const keys = [ 'so1', 'home' ];
 
     // Act.
-    const shelf = findShelf(shelves, parameters);
+    const lit = litShelves(shelves, keys);
 
     // Assert.
-    expect(shelf)
-      .toMatchObject({ name: 'Home Cooking' });
+    expect(lit)
+      .toEqual([ home, so1 ]);
   });
 
-  it('finds a game\'s shelf by its tag', () =>
-  {
-    // Arrange.
-    const parameters = new URLSearchParams('game=so1');
-
-    // Act.
-    const shelf = findShelf(shelves, parameters);
-
-    // Assert.
-    expect(shelf)
-      .toMatchObject({ name: 'Star Ocean: First Departure' });
-  });
-
-  it('finds a collection\'s shelf by its folder', () =>
-  {
-    // Arrange.
-    const parameters = new URLSearchParams('collection=cocktails');
-
-    // Act.
-    const shelf = findShelf(shelves, parameters);
-
-    // Assert.
-    expect(shelf)
-      .toMatchObject({ name: 'Cocktails' });
-  });
-
-  it('finds nothing when the address names a shelf that doesn\'t exist', () =>
+  it('passes over a key that names no shelf', () =>
   {
     // Arrange- so is the start of both games' tags, but neither game's tag.
-    const parameters = new URLSearchParams('game=so');
+    const keys = [ 'so', 'so2' ];
 
     // Act.
-    const shelf = findShelf(shelves, parameters);
+    const lit = litShelves(shelves, keys);
 
     // Assert.
-    expect(shelf)
-      .toBeNull();
-  });
-
-  it('takes the game when the address names a game and a collection', () =>
-  {
-    // Arrange- the collection comes first, so taking whichever comes first would pick it.
-    const parameters = new URLSearchParams('collection=cocktails&game=so2');
-
-    // Act.
-    const shelf = findShelf(shelves, parameters);
-
-    // Assert.
-    expect(shelf)
-      .toMatchObject({ name: 'Star Ocean: The Second Story' });
+    expect(lit)
+      .toEqual([ so2 ]);
   });
 });
 
 /*
- * groupByCourse owes a shelf every recipe exactly once, under the course that claims it, with the courses
+ * toggleShelf owes a chip's tap the keys to light next: the tapped shelf flipped, everything else as it
+ * was, and the result always in chip order, so one choice of shelves has one address.
+ */
+describe('toggleShelf', () =>
+{
+  it('lights a shelf that was out, keeping chip order', () =>
+  {
+    // Arrange.
+    const keys = [ 'so1' ];
+
+    // Act.
+    const next = toggleShelf(shelves, keys, 'home');
+
+    // Assert.
+    expect(next)
+      .toEqual([ 'home', 'so1' ]);
+  });
+
+  it('puts out a shelf that was lit, leaving the rest lit', () =>
+  {
+    // Arrange.
+    const keys = [ 'home', 'so2' ];
+
+    // Act.
+    const next = toggleShelf(shelves, keys, 'home');
+
+    // Assert.
+    expect(next)
+      .toEqual([ 'so2' ]);
+  });
+
+  it('drops a key that names no shelf', () =>
+  {
+    // Arrange.
+    const keys = [ 'nope', 'so1' ];
+
+    // Act.
+    const next = toggleShelf(shelves, keys, 'so2');
+
+    // Assert.
+    expect(next)
+      .toEqual([ 'so2', 'so1' ]);
+  });
+});
+
+/*
+ * recipesOn owes the list everything when no shelf is lit, and otherwise the recipes the lit shelves hold
+ * between them, each once, in the catalog's order rather than the shelves'.
+ */
+describe('recipesOn', () =>
+{
+  it('shows every recipe when no shelf is lit', () =>
+  {
+    // Arrange.
+    const lit: Shelf[] = [];
+
+    // Act.
+    const shown = recipesOn(cookbook, lit);
+
+    // Assert.
+    expect(slugsOf(shown))
+      .toEqual([ 'chorizo-gravy', 'fruit-punch', 'mystery-stew', 'rice-omelet', 'sukiyaki' ]);
+  });
+
+  it('shows each recipe on any lit shelf once, in the catalog\'s order', () =>
+  {
+    // Arrange- both games hold the rice omelet, and SO1 is listed first.
+    const lit = [ so1, so2 ];
+
+    // Act.
+    const shown = recipesOn(cookbook, lit);
+
+    // Assert.
+    expect(slugsOf(shown))
+      .toEqual([ 'fruit-punch', 'rice-omelet', 'sukiyaki' ]);
+  });
+});
+
+/*
+ * headingFor owes the list a name that says what's showing.
+ */
+describe('headingFor', () =>
+{
+  it('says Everything when no shelf is lit', () =>
+  {
+    // Arrange.
+    const lit: Shelf[] = [];
+
+    // Act.
+    const heading = headingFor(lit);
+
+    // Assert.
+    expect(heading)
+      .toBe('Everything');
+  });
+
+  it('gives one lit shelf\'s full name', () =>
+  {
+    // Arrange.
+    const lit = [ so2 ];
+
+    // Act.
+    const heading = headingFor(lit);
+
+    // Assert.
+    expect(heading)
+      .toBe('Star Ocean: The Second Story');
+  });
+
+  it('joins several lit shelves\' labels', () =>
+  {
+    // Arrange.
+    const lit = [ home, so1 ];
+
+    // Act.
+    const heading = headingFor(lit);
+
+    // Assert.
+    expect(heading)
+      .toBe('Home Cooking + SO1');
+  });
+});
+
+/*
+ * chipCount owes each chip how many of its recipes the search would show.
+ */
+describe('chipCount', () =>
+{
+  it('counts every recipe on the shelf when nothing is typed', () =>
+  {
+    // Arrange.
+    const query = '';
+
+    // Act.
+    const count = chipCount(so2, query);
+
+    // Assert.
+    expect(count)
+      .toBe(2);
+  });
+
+  it('counts only the shelf\'s matches during a search', () =>
+  {
+    // Arrange- both SO1 dishes are tagged, but only one is an egg dish.
+    const query = 'egg';
+
+    // Act.
+    const count = chipCount(so1, query);
+
+    // Assert.
+    expect(count)
+      .toBe(1);
+  });
+});
+
+/*
+ * isSearching owes the page a plain answer to whether a search is on, which spaces alone don't make.
+ */
+describe('isSearching', () =>
+{
+  it('is off when the box holds nothing but spaces', () =>
+  {
+    // Arrange.
+    const queries = [ '', '   ' ];
+
+    // Act.
+    const answers = queries.map(isSearching);
+
+    // Assert.
+    expect(answers)
+      .toEqual([ false, false ]);
+  });
+
+  it('is on once a word is typed', () =>
+  {
+    // Arrange.
+    const query = ' egg ';
+
+    // Act.
+    const answer = isSearching(query);
+
+    // Assert.
+    expect(answer)
+      .toBe(true);
+  });
+});
+
+/*
+ * describeCount owes the line under the list's name a count that reads as a sentence, singular for one,
+ * and during a search, which words it matched.
+ */
+describe('describeCount', () =>
+{
+  it('counts one recipe in the singular', () =>
+  {
+    // Arrange.
+    const count = 1;
+
+    // Act.
+    const line = describeCount(count, '');
+
+    // Assert.
+    expect(line)
+      .toBe('1 recipe');
+  });
+
+  it('counts several recipes in the plural', () =>
+  {
+    // Arrange.
+    const count = 125;
+
+    // Act.
+    const line = describeCount(count, ' ');
+
+    // Assert.
+    expect(line)
+      .toBe('125 recipes');
+  });
+
+  it('says when nothing matches a search', () =>
+  {
+    // Arrange.
+    const count = 0;
+
+    // Act.
+    const line = describeCount(count, 'egg');
+
+    // Assert.
+    expect(line)
+      .toBe('No recipes match “egg”');
+  });
+
+  it('says when one recipe matches a search', () =>
+  {
+    // Arrange.
+    const count = 1;
+
+    // Act.
+    const line = describeCount(count, 'egg');
+
+    // Assert.
+    expect(line)
+      .toBe('1 recipe matches “egg”');
+  });
+
+  it('says how many recipes match a search, without its stray spaces', () =>
+  {
+    // Arrange.
+    const count = 3;
+
+    // Act.
+    const line = describeCount(count, '  egg ');
+
+    // Assert.
+    expect(line)
+      .toBe('3 recipes match “egg”');
+  });
+});
+
+/*
+ * offersEverything owes a search that found nothing on the lit shelves a way out, and nothing else one.
+ */
+describe('offersEverything', () =>
+{
+  it('offers everything when the lit shelves have nothing for a search', () =>
+  {
+    // Arrange.
+    const lit = [ so1 ];
+
+    // Act.
+    const offered = offersEverything(0, lit, 'egg');
+
+    // Assert.
+    expect(offered)
+      .toBe(true);
+  });
+
+  it('makes no offer when something matched', () =>
+  {
+    // Arrange.
+    const lit = [ so1 ];
+
+    // Act.
+    const offered = offersEverything(1, lit, 'egg');
+
+    // Assert.
+    expect(offered)
+      .toBe(false);
+  });
+
+  it('makes no offer when no shelf is lit, since everything was searched', () =>
+  {
+    // Arrange.
+    const lit: Shelf[] = [];
+
+    // Act.
+    const offered = offersEverything(0, lit, 'egg');
+
+    // Assert.
+    expect(offered)
+      .toBe(false);
+  });
+
+  it('makes no offer without a search', () =>
+  {
+    // Arrange.
+    const lit = [ so1 ];
+
+    // Act.
+    const offered = offersEverything(0, lit, '  ');
+
+    // Assert.
+    expect(offered)
+      .toBe(false);
+  });
+});
+
+/*
+ * namesPlaces owes the rows a place name only when the list mixes shelves.
+ */
+describe('namesPlaces', () =>
+{
+  it('leaves places off a list from one shelf', () =>
+  {
+    // Arrange.
+    const lit = [ home ];
+
+    // Act.
+    const named = namesPlaces(lit);
+
+    // Assert.
+    expect(named)
+      .toBe(false);
+  });
+
+  it('names places when no shelf or several are lit', () =>
+  {
+    // Arrange.
+    const choices = [ [], [ home, so2 ] ];
+
+    // Act.
+    const named = choices.map(namesPlaces);
+
+    // Assert.
+    expect(named)
+      .toEqual([ true, true ]);
+  });
+});
+
+/*
+ * pageTitle owes a tab a title that says what it holds, the search first, since that's the most specific.
+ */
+describe('pageTitle', () =>
+{
+  it('names the search during one, even with shelves lit', () =>
+  {
+    // Arrange.
+    const lit = [ so2 ];
+
+    // Act.
+    const title = pageTitle(lit, ' egg ');
+
+    // Assert.
+    expect(title)
+      .toBe('egg · Recipes');
+  });
+
+  it('names the lit shelves without a search', () =>
+  {
+    // Arrange.
+    const lit = [ so2, so1 ];
+
+    // Act.
+    const title = pageTitle(lit, '');
+
+    // Assert.
+    expect(title)
+      .toBe('SO2 + SO1 · Recipes');
+  });
+
+  it('is the site\'s name with nothing lit or searched', () =>
+  {
+    // Arrange.
+    const lit: Shelf[] = [];
+
+    // Act.
+    const title = pageTitle(lit, '');
+
+    // Assert.
+    expect(title)
+      .toBe('Recipes');
+  });
+});
+
+/*
+ * homeParameters and homeAddress owe the address one way of writing each choice of shelves and search.
+ */
+describe('homeParameters', () =>
+{
+  it('lists a shelf parameter per key, then the search', () =>
+  {
+    // Arrange.
+    const keys = [ 'home', 'so1' ];
+
+    // Act.
+    const parameters = homeParameters(keys, 'egg');
+
+    // Assert.
+    expect(parameters)
+      .toEqual([ [ 'shelf', 'home' ], [ 'shelf', 'so1' ], [ 'q', 'egg' ] ]);
+  });
+
+  it('leaves the search out when the box is empty', () =>
+  {
+    // Arrange.
+    const keys = [ 'so1' ];
+
+    // Act.
+    const parameters = homeParameters(keys, '');
+
+    // Assert.
+    expect(parameters)
+      .toEqual([ [ 'shelf', 'so1' ] ]);
+  });
+});
+
+describe('homeAddress', () =>
+{
+  it('is the bare home page for no shelves and no search', () =>
+  {
+    // Arrange.
+    const keys: string[] = [];
+
+    // Act.
+    const address = homeAddress(keys, '');
+
+    // Assert.
+    expect(address)
+      .toBe('/');
+  });
+
+  it('writes the shelves and the search into the address', () =>
+  {
+    // Arrange.
+    const keys = [ 'so4', 'so5' ];
+
+    // Act.
+    const address = homeAddress(keys, 'egg rice');
+
+    // Assert.
+    expect(address)
+      .toBe('/?shelf=so4&shelf=so5&q=egg+rice');
+  });
+});
+
+/*
+ * hueOf owes the chips a rainbow that never puts one color beside itself, however many shelves there are.
+ */
+describe('hueOf', () =>
+{
+  it('counts through the seven colors and starts again after violet', () =>
+  {
+    // Arrange.
+    const positions = [ 0, 1, 6, 7, 9 ];
+
+    // Act.
+    const hues = positions.map(hueOf);
+
+    // Assert.
+    expect(hues)
+      .toEqual([ 0, 1, 6, 0, 2 ]);
+  });
+});
+
+/*
+ * barBackground owes the bar beside the list's name the lit chips' own colors.
+ */
+describe('barBackground', () =>
+{
+  it('runs the whole rainbow when no shelf is lit', () =>
+  {
+    // Arrange.
+    const lit: Shelf[] = [];
+
+    // Act.
+    const background = barBackground(shelves, lit);
+
+    // Assert.
+    expect(background)
+      .toBe('linear-gradient(to bottom, var(--rainbow-0), var(--rainbow-1), var(--rainbow-2), var(--rainbow-3), '
+        + 'var(--rainbow-4), var(--rainbow-5), var(--rainbow-6))');
+  });
+
+  it('is one lit chip\'s color, solid', () =>
+  {
+    // Arrange- SO1 is the third chip.
+    const lit = [ so1 ];
+
+    // Act.
+    const background = barBackground(shelves, lit);
+
+    // Assert.
+    expect(background)
+      .toBe('linear-gradient(to bottom, var(--rainbow-2), var(--rainbow-2))');
+  });
+
+  it('runs through several lit chips\' colors in chip order', () =>
+  {
+    // Arrange.
+    const lit = [ home, so1 ];
+
+    // Act.
+    const background = barBackground(shelves, lit);
+
+    // Assert.
+    expect(background)
+      .toBe('linear-gradient(to bottom, var(--rainbow-0), var(--rainbow-2))');
+  });
+});
+
+/*
+ * groupByCourse owes a list every recipe exactly once, under the course that claims it, with the courses
  * in menu order. A recipe tagged with no course at all still has to show up somewhere.
  */
 describe('groupByCourse', () =>
@@ -230,7 +741,7 @@ describe('groupByCourse', () =>
     const groups = groupByCourse(recipes);
 
     // Assert.
-    expect(groups.map((group) => [ group.heading, group.recipes.map((member) => member.slug) ]))
+    expect(groups.map((group) => [ group.heading, slugsOf(group.recipes) ]))
       .toEqual([
         [ 'Dinner', [ 'hamburg-steak' ] ],
         [ 'Soups', [ 'ultimate-ramen' ] ],
@@ -248,7 +759,7 @@ describe('groupByCourse', () =>
     const groups = groupByCourse(recipes);
 
     // Assert.
-    expect(groups.map((group) => [ group.heading, group.recipes.map((member) => member.slug) ]))
+    expect(groups.map((group) => [ group.heading, slugsOf(group.recipes) ]))
       .toEqual([ [ 'Dinner', [ 'sukiyaki' ] ], [ 'Everything else', [ 'mystery-meat' ] ] ]);
   });
 
@@ -261,13 +772,26 @@ describe('groupByCourse', () =>
     const groups = groupByCourse(recipes);
 
     // Assert.
-    expect(groups[0].recipes.map((member) => member.slug))
+    expect(slugsOf(groups[0].recipes))
       .toEqual([ 'sukiyaki', 'hamburg-steak' ]);
+  });
+
+  it('keeps each course\'s color from its place on the whole menu', () =>
+  {
+    // Arrange- Dinner is fourth on the menu and Everything else thirteenth, though here they're first and second.
+    const recipes = [ recipe('sukiyaki', '', [ 'dinner' ]), recipe('mystery-meat', '', [ 'beef' ]) ];
+
+    // Act.
+    const groups = groupByCourse(recipes);
+
+    // Assert.
+    expect(groups.map((group) => [ group.heading, group.hue ]))
+      .toEqual([ [ 'Dinner', 3 ], [ 'Everything else', 5 ] ]);
   });
 
   it('makes no groups when there are no recipes', () =>
   {
-    // Arrange- an empty shelf.
+    // Arrange- an empty list.
     const recipes: RecipeSummary[] = [];
 
     // Act.
@@ -294,27 +818,59 @@ describe('groupByCourse', () =>
 });
 
 /*
- * hueOf owes the chips a rainbow that never puts one color beside itself, however many shelves there are.
+ * toggleCourse owes a course's tap the open courses after it: that one flipped, the rest as they were.
  */
-describe('hueOf', () =>
+describe('toggleCourse', () =>
 {
-  it('counts through the seven colors and starts again after violet', () =>
+  it('opens a closed course', () =>
   {
     // Arrange.
-    const positions = [ 0, 1, 6, 7, 9 ];
+    const open = [ 'Dinner' ];
 
     // Act.
-    const hues = positions.map(hueOf);
+    const next = toggleCourse(open, 'Desserts');
 
     // Assert.
-    expect(hues)
-      .toEqual([ 0, 1, 6, 0, 2 ]);
+    expect(next)
+      .toEqual([ 'Dinner', 'Desserts' ]);
+  });
+
+  it('closes an open course, leaving the rest open', () =>
+  {
+    // Arrange.
+    const open = [ 'Dinner', 'Desserts' ];
+
+    // Act.
+    const next = toggleCourse(open, 'Dinner');
+
+    // Assert.
+    expect(next)
+      .toEqual([ 'Desserts' ]);
   });
 });
 
 /*
- * placeOf owes a recipe's page and its search result the place it lives, and never Home Cooking for a
- * game's dish, which the home page keeps off that shelf.
+ * courseBodyId owes each course's toggle an id naming the part of the page it opens.
+ */
+describe('courseBodyId', () =>
+{
+  it('turns a heading into an id, a word at a time', () =>
+  {
+    // Arrange.
+    const headings = [ 'Desserts', 'Everything else' ];
+
+    // Act.
+    const ids = headings.map(courseBodyId);
+
+    // Assert.
+    expect(ids)
+      .toEqual([ 'course-desserts', 'course-everything-else' ]);
+  });
+});
+
+/*
+ * placeOf owes a recipe's page and a mixed list's rows the place the recipe lives, and never Home Cooking
+ * for a game's dish, which the home page keeps off that shelf.
  */
 describe('placeOf', () =>
 {

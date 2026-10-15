@@ -1,5 +1,6 @@
 import type { Catalog, RecipeSummary } from '../types';
 import { collectionLabel, topLevelLabel } from './collections';
+import { searchRecipes } from './search';
 
 /**
  * The tag every dish from a game carries. Those dishes sit on their game's shelf, so Home Cooking leaves
@@ -8,28 +9,40 @@ import { collectionLabel, topLevelLabel } from './collections';
 const gameTag = 'game';
 
 /**
- * One shelf on the home page: Home Cooking, a collection, or a game. The address is where its chip leads,
- * and it's also how the page finds the shelf again, so the back button and a shared link both land on it.
+ * The key Home Cooking goes by in the address. A collection goes by its folder's name and a game by its
+ * tag, so a folder and a game sharing a name would light up together, which does no harm.
+ */
+const homeKey = 'home';
+
+/**
+ * The name over the list when no shelf is lit, and every recipe is showing.
+ */
+const everythingName = 'Everything';
+
+/**
+ * One shelf on the home page: Home Cooking, a collection, or a game. The key is how the address names it,
+ * the label goes on its chip, and the name goes over its list.
  */
 interface Shelf
 {
-  address: string;
+  key: string;
   label: string;
   name: string;
   recipes: RecipeSummary[];
 }
 
 /**
- * One course on a shelf, under its heading.
+ * One course on the home page: its heading, its rainbow color, and its recipes.
  */
 interface CourseGroup
 {
   heading: string;
+  hue: number;
   recipes: RecipeSummary[];
 }
 
 /**
- * The courses a shelf is split into, in the order they're shown: through the day first, then the dishes
+ * The courses the list is split into, in the order they're shown: through the day first, then the dishes
  * that go alongside, then the sweets and the drinks.
  */
 const courses = [
@@ -65,8 +78,8 @@ const otherHeading = 'Everything else';
 /**
  * Builds every shelf for the home page: Home Cooking first, then each collection by name, then each game
  * in the order the games file lists them. Home Cooking is the top level minus the games' dishes, and it's
- * always there, even empty, since the home page opens on it. A game's shelf holds every recipe carrying
- * its tag, wherever the card sits, and a dish from several games is on each of their shelves.
+ * always there, even empty. A game's shelf holds every recipe carrying its tag, wherever the card sits,
+ * and a dish from several games is on each of their shelves.
  * @param {Catalog} catalog The recipes and the games, with the recipes already in the order to show them.
  * @returns {Shelf[]} Every shelf, each with its recipes in that same order.
  */
@@ -75,7 +88,7 @@ const buildShelves = (catalog: Catalog): Shelf[] =>
   const { recipes, games } = catalog;
 
   const home: Shelf = {
-    address: '/',
+    key: homeKey,
     label: topLevelLabel,
     name: topLevelLabel,
     recipes: recipes.filter((recipe) => recipe.collection === '' && recipe.tags.includes(gameTag) === false),
@@ -84,18 +97,13 @@ const buildShelves = (catalog: Catalog): Shelf[] =>
   const collections = collectionNames(recipes).map((folder): Shelf =>
   {
     const label = collectionLabel(folder);
-    return {
-      address: `/?collection=${encodeURIComponent(folder)}`,
-      label,
-      name: label,
-      recipes: recipes.filter((recipe) => recipe.collection === folder),
-    };
+    return { key: folder, label, name: label, recipes: recipes.filter((recipe) => recipe.collection === folder) };
   });
 
   const gameShelves = games.map((game): Shelf =>
   {
     return {
-      address: `/?game=${encodeURIComponent(game.tag)}`,
+      key: game.tag,
       label: game.label,
       name: game.name,
       recipes: recipes.filter((recipe) => recipe.tags.includes(game.tag)),
@@ -118,55 +126,182 @@ const collectionNames = (recipes: RecipeSummary[]): string[] =>
 };
 
 /**
- * Finds the shelf the address asks for. No shelf named means Home Cooking, and a game named wins over a
- * collection, since only an address typed by hand could name both.
+ * The lit shelves, in the order their chips sit, from the keys in the address. A key that names no shelf
+ * is passed over, so a mistyped or out-of-date link still shows whatever else it names.
  * @param {Shelf[]} shelves Every shelf.
- * @param {URLSearchParams} parameters The query part of the home page's address.
- * @returns {Shelf | null} The shelf, or null when the address names one that doesn't exist.
+ * @param {string[]} keys The keys the address names.
+ * @returns {Shelf[]} The lit shelves.
  */
-const findShelf = (shelves: Shelf[], parameters: URLSearchParams): Shelf | null =>
+const litShelves = (shelves: Shelf[], keys: string[]): Shelf[] =>
 {
-  const address = addressFor(parameters);
-  return shelves.find((shelf) => shelf.address === address) ?? null;
+  return shelves.filter((shelf) => keys.includes(shelf.key));
 };
 
 /**
- * The address of the shelf a query names, written the way the shelves write their own.
- * @param {URLSearchParams} parameters The query part of the home page's address.
- * @returns {string} The address of the shelf it names.
+ * The keys to put in the address after a chip is tapped: its shelf lit when it wasn't, and put out when it
+ * was. They come back in chip order, so one choice of shelves always has one address, whatever order the
+ * taps came in, and any key naming no shelf is dropped on the way.
+ * @param {Shelf[]} shelves Every shelf.
+ * @param {string[]} keys The keys lit now.
+ * @param {string} key The tapped chip's key.
+ * @returns {string[]} The keys to light.
  */
-const addressFor = (parameters: URLSearchParams): string =>
+const toggleShelf = (shelves: Shelf[], keys: string[], key: string): string[] =>
 {
-  const game = parameters.get('game');
-  if (game !== null)
-  {
-    return `/?game=${encodeURIComponent(game)}`;
-  }
-
-  const collection = parameters.get('collection');
-  if (collection !== null)
-  {
-    return `/?collection=${encodeURIComponent(collection)}`;
-  }
-
-  return '/';
+  const wanted = keys.includes(key) ? keys.filter((other) => other !== key) : [ ...keys, key ];
+  return litShelves(shelves, wanted).map((shelf) => shelf.key);
 };
 
 /**
- * Splits a shelf's recipes into courses, in menu order, each recipe under the one course that claims it.
- * Recipes with no course tag go under a last heading of their own, and empty courses are left out.
- * @param {RecipeSummary[]} recipes A shelf's recipes, in the order to show them.
- * @returns {CourseGroup[]} The courses that have recipes, each keeping that order.
+ * The recipes the lit shelves hold between them: every recipe when none is lit, and otherwise each recipe
+ * on any lit shelf, once, in the catalog's own order.
+ * @param {RecipeSummary[]} recipes Every recipe, in the order to show them.
+ * @param {Shelf[]} lit The lit shelves.
+ * @returns {RecipeSummary[]} The recipes to show.
  */
-const groupByCourse = (recipes: RecipeSummary[]): CourseGroup[] =>
+const recipesOn = (recipes: RecipeSummary[], lit: Shelf[]): RecipeSummary[] =>
 {
-  const sections = [ ...courses, { tag: '', heading: otherHeading } ];
-  return sections
-    .map((section) =>
-    {
-      return { heading: section.heading, recipes: recipes.filter((recipe) => courseOf(recipe) === section.tag) };
-    })
-    .filter((group) => group.recipes.length > 0);
+  if (lit.length === 0)
+  {
+    return recipes;
+  }
+  return recipes.filter((recipe) => lit.some((shelf) => shelf.recipes.includes(recipe)));
+};
+
+/**
+ * The name over the list: Everything when no shelf is lit, the shelf's full name when one is, and the lit
+ * chips' labels joined when several are, which keeps the line short.
+ * @param {Shelf[]} lit The lit shelves.
+ * @returns {string} The name.
+ */
+const headingFor = (lit: Shelf[]): string =>
+{
+  if (lit.length === 0)
+  {
+    return everythingName;
+  }
+  if (lit.length === 1)
+  {
+    return lit[0].name;
+  }
+  return lit.map((shelf) => shelf.label).join(' + ');
+};
+
+/**
+ * The number on a shelf's chip: how many of its recipes match the search, which is all of them when
+ * nothing has been typed. So the chips answer "how many egg dishes are in each game?" before any is tapped.
+ * @param {Shelf} shelf The shelf.
+ * @param {string} query What's in the search box.
+ * @returns {number} How many of its recipes match.
+ */
+const chipCount = (shelf: Shelf, query: string): number =>
+{
+  return searchRecipes(shelf.recipes, query).length;
+};
+
+/**
+ * Whether anything has been typed into the search box, other than spaces.
+ * @param {string} query What's in the search box.
+ * @returns {boolean} True when there's a search.
+ */
+const isSearching = (query: string): boolean =>
+{
+  return query.trim() !== '';
+};
+
+/**
+ * The line under the list's name: how many recipes it holds, or, during a search, how many match.
+ * @param {number} count How many recipes are showing.
+ * @param {string} query What's in the search box.
+ * @returns {string} The line.
+ */
+const describeCount = (count: number, query: string): string =>
+{
+  const words = query.trim();
+  if (words === '')
+  {
+    return count === 1 ? '1 recipe' : `${count} recipes`;
+  }
+  if (count === 0)
+  {
+    return `No recipes match “${words}”`;
+  }
+  return count === 1 ? `1 recipe matches “${words}”` : `${count} recipes match “${words}”`;
+};
+
+/**
+ * Whether to offer the same search over everything: only when lit shelves found nothing for a search,
+ * since with none lit, everything was already searched.
+ * @param {number} count How many recipes matched.
+ * @param {Shelf[]} lit The lit shelves.
+ * @param {string} query What's in the search box.
+ * @returns {boolean} True when the offer belongs under the count.
+ */
+const offersEverything = (count: number, lit: Shelf[], query: string): boolean =>
+{
+  return count === 0 && lit.length > 0 && isSearching(query);
+};
+
+/**
+ * Whether each row names where its recipe lives. A list from one shelf doesn't need it, since the shelf's
+ * name is over the list, but a list mixing shelves does.
+ * @param {Shelf[]} lit The lit shelves.
+ * @returns {boolean} True when rows name their places.
+ */
+const namesPlaces = (lit: Shelf[]): boolean =>
+{
+  return lit.length !== 1;
+};
+
+/**
+ * The tab's title: the search during one, the lit shelves when there are some, and the site's name
+ * otherwise, so a tab or a bookmark says what it holds.
+ * @param {Shelf[]} lit The lit shelves.
+ * @param {string} query What's in the search box.
+ * @returns {string} The title.
+ */
+const pageTitle = (lit: Shelf[], query: string): string =>
+{
+  if (isSearching(query))
+  {
+    return `${query.trim()} · Recipes`;
+  }
+  if (lit.length > 0)
+  {
+    return `${headingFor(lit)} · Recipes`;
+  }
+  return 'Recipes';
+};
+
+/**
+ * The home page's address parameters: one shelf parameter per lit shelf, in chip order, then the search
+ * when there is one. Repeating the shelf parameter, rather than joining keys with commas, keeps the address
+ * readable, since commas would be written out as %2C.
+ * @param {string[]} keys The lit shelves' keys, in chip order.
+ * @param {string} query What's in the search box.
+ * @returns {[ string, string ][]} The parameters, in order.
+ */
+const homeParameters = (keys: string[], query: string): [ string, string ][] =>
+{
+  const parameters = keys.map((key): [ string, string ] => [ 'shelf', key ]);
+  if (query !== '')
+  {
+    parameters.push([ 'q', query ]);
+  }
+  return parameters;
+};
+
+/**
+ * The home page's address for a choice of shelves and a search, for links into it from elsewhere, like a
+ * recipe's tags.
+ * @param {string[]} keys The shelves to light, in chip order.
+ * @param {string} query The search.
+ * @returns {string} The address.
+ */
+const homeAddress = (keys: string[], query: string): string =>
+{
+  const search = new URLSearchParams(homeParameters(keys, query)).toString();
+  return search === '' ? '/' : `/?${search}`;
 };
 
 /**
@@ -181,19 +316,39 @@ const hueOf = (position: number): number =>
 };
 
 /**
- * Where a recipe lives, for the line above its title and its row in search results: its collection, or
- * Home Cooking for the top level. A game's dish at the top level lives on its game's shelf instead, and
- * its tags already name the game, so it gets no line at all.
- * @param {RecipeSummary} recipe The recipe.
- * @returns {string} The place to name, or an empty string when there's none to name.
+ * The bar beside the list's name, as a CSS background: the lit chips' colors top to bottom, one color
+ * solid, and the whole rainbow when no shelf is lit, since then everything is showing.
+ * @param {Shelf[]} shelves Every shelf, in chip order, which is what decides each one's color.
+ * @param {Shelf[]} lit The lit shelves.
+ * @returns {string} The background.
  */
-const placeOf = (recipe: RecipeSummary): string =>
+const barBackground = (shelves: Shelf[], lit: Shelf[]): string =>
 {
-  if (recipe.collection === '' && recipe.tags.includes(gameTag))
-  {
-    return '';
-  }
-  return collectionLabel(recipe.collection);
+  const hues = lit.length === 0 ? [ 0, 1, 2, 3, 4, 5, 6 ] : lit.map((shelf) => hueOf(shelves.indexOf(shelf)));
+
+  // a gradient needs two colors, so one lit shelf names its color twice.
+  const stops = hues.length === 1 ? [ hues[0], hues[0] ] : hues;
+  return `linear-gradient(to bottom, ${stops.map((hue) => `var(--rainbow-${hue})`).join(', ')})`;
+};
+
+/**
+ * Splits recipes into courses, in menu order, each recipe under the one course that claims it. Recipes
+ * with no course tag go under a last heading of their own, and empty courses are left out. Each course
+ * takes its color from its place on the whole menu, so Dinner is the same color however few courses a
+ * search leaves.
+ * @param {RecipeSummary[]} recipes The recipes, in the order to show them.
+ * @returns {CourseGroup[]} The courses that have recipes, each keeping that order.
+ */
+const groupByCourse = (recipes: RecipeSummary[]): CourseGroup[] =>
+{
+  const sections = [ ...courses, { tag: '', heading: otherHeading } ];
+  return sections
+    .map((section, position) =>
+    {
+      const members = recipes.filter((recipe) => courseOf(recipe) === section.tag);
+      return { heading: section.heading, hue: hueOf(position), recipes: members };
+    })
+    .filter((group) => group.recipes.length > 0);
 };
 
 /**
@@ -206,5 +361,64 @@ const courseOf = (recipe: RecipeSummary): string =>
   return claimOrder.find((tag) => recipe.tags.includes(tag)) ?? '';
 };
 
-export { buildShelves, claimOrder, courses, findShelf, groupByCourse, hueOf, placeOf };
+/**
+ * The open courses after one is tapped: opened when it was closed, and closed when it was open.
+ * @param {string[]} open The headings of the courses open now.
+ * @param {string} heading The tapped course's heading.
+ * @returns {string[]} The headings to have open.
+ */
+const toggleCourse = (open: string[], heading: string): string[] =>
+{
+  return open.includes(heading) ? open.filter((other) => other !== heading) : [ ...open, heading ];
+};
+
+/**
+ * The id of the part of the page a course opens and closes, so its toggle can say which part it controls.
+ * @param {string} heading The course's heading, like Everything else.
+ * @returns {string} The id, like course-everything-else.
+ */
+const courseBodyId = (heading: string): string =>
+{
+  return `course-${heading.toLowerCase().split(' ').join('-')}`;
+};
+
+/**
+ * Where a recipe lives, for the line above its title: its collection, or Home Cooking for the top level. A
+ * game's dish at the top level lives on its game's shelf instead, and its tags already name the game, so it
+ * gets no line at all.
+ * @param {RecipeSummary} recipe The recipe.
+ * @returns {string} The place to name, or an empty string when there's none to name.
+ */
+const placeOf = (recipe: RecipeSummary): string =>
+{
+  if (recipe.collection === '' && recipe.tags.includes(gameTag))
+  {
+    return '';
+  }
+  return collectionLabel(recipe.collection);
+};
+
+export {
+  barBackground,
+  buildShelves,
+  chipCount,
+  claimOrder,
+  courseBodyId,
+  courses,
+  describeCount,
+  groupByCourse,
+  headingFor,
+  homeAddress,
+  homeParameters,
+  hueOf,
+  isSearching,
+  litShelves,
+  namesPlaces,
+  offersEverything,
+  pageTitle,
+  placeOf,
+  recipesOn,
+  toggleCourse,
+  toggleShelf,
+};
 export type { CourseGroup, Shelf };

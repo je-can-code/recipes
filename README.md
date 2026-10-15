@@ -183,11 +183,10 @@ site moved to https still points at the old address, so replace it.
 
 ## Shelves and search
 
-The home page keeps the recipes on shelves, with a rainbow chip for each under the search box, counts
-included: Home Cooking first, then each collection, then each game.
+The home page keeps the recipes on shelves, with a rainbow chip for each under the search box: Home
+Cooking first, then each collection, then each game.
 
-- **Home Cooking** is the cards at the top level of the recipes folder, minus the games' dishes. It's
-  where the home page opens.
+- **Home Cooking** is the cards at the top level of the recipes folder, minus the games' dishes.
 - **A collection** is a folder one level down, named after it, so `cocktails/mojito.yaml` is on the
   Cocktails shelf. Cards any deeper aren't read, and `check` says so.
 - **A game** gets a shelf by having an entry in `_games.yaml` in the recipes folder: the tag its dishes
@@ -196,13 +195,26 @@ included: Home Cooking first, then each collection, then each game.
   cards, outside git, and is read live the same way. `check` reports a mistake in it, and any top-level card
   tagged `game` whose game isn't listed, since that card would be on no shelf.
 
-A shelf lists its recipes under course headings, Breakfast through Drinks, each recipe once. A recipe
-tagged with two courses goes under the more particular kind of dish, so a ramen tagged dinner and soup is
-with the soups, and one with no course tag at all goes under Everything else. The address holds the shelf
-(`/?game=so2`, `/?collection=cocktails`), so the back button and a shared link land on it.
+A tap lights a chip and another puts it out. Lit chips combine, so lighting SO4 and SO5 lists both games'
+dishes, each once, and with no chip lit, everything shows. That's how the page opens.
 
-Search looks at each recipe's title, tags and collection. Every word has to match, and words match
-partway through, so `beef dinner` finds recipes that are both, and `chori` already finds the chorizo.
+The list is split into courses, Breakfast through Drinks, each recipe once. A recipe tagged with two
+courses goes under the more particular kind of dish, so a ramen tagged dinner and soup is with the soups,
+and one with no course tag at all goes under Everything else. Each course is an accordion, closed until
+it's tapped. The open ones are remembered while the site stays open, so coming back from a recipe finds
+the page as it was, scroll included.
+
+**Search** narrows whatever the lit chips show, as the typing goes, and each chip's number turns into its
+count of matches, so lighting nothing and typing `egg` shows how many egg dishes every shelf has. During a
+search, every course with a match shows open. Once something is typed, the top of the page shrinks, so
+the results sit above a phone's keyboard. When the lit chips have nothing that matches, a link offers the
+same search over everything. Search looks at each recipe's title, tags and collection. Every word has to
+match, and words match partway through, so `beef dinner` finds recipes that are both, and `chori` already
+finds the chorizo.
+
+The address holds the lit chips and the search (`/?shelf=so4&shelf=so5&q=egg`), so the back button and a
+shared link land on the same list. A recipe's tags link to a search for that tag, and an address under
+`/search?q=` goes to the same search on the home page.
 
 ## Where things live
 
@@ -222,7 +234,7 @@ partway through, so `beef dinner` finds recipes that are both, and `chori` alrea
 | `scripts/app-icon.html` | The home-screen icon, which the PNGs in `web/public` are screenshots of |
 | `scripts/build-worker.ts` | Builds the service worker into the site as `sw.js`, after Vite has built the rest, with the build's name and file list written in |
 | `web/src/worker` | The service worker. `policy.ts` and `strategies.ts` decide what's saved and when the copy answers, as plain tested functions, and `sw.ts` connects them to the browser. `tsconfig.worker.json` checks it against a worker's globals rather than a page's |
-| `web/src/services` | Search, shelves and courses, link handling, the API client, installing the service worker, and everything cooking runs on (progress, timers and finding times in a step, the tracker's words, confetti physics, the chime), as plain tested functions |
-| `web/src/hooks` | The glue between those services and the browser: loading a recipe, saving progress, ticking timers, the screen wake lock |
+| `web/src/services` | Search, shelves, courses and the home page's address, link handling, the API client, installing the service worker, and everything cooking runs on (progress, timers and finding times in a step, the tracker's words, confetti physics, the chime), as plain tested functions |
+| `web/src/hooks` | The glue between those services and the browser: loading a recipe, saving progress, ticking timers, the screen wake lock, remembering which courses are open |
 | `web/src/pages`, `web/src/components` | The pages and their pieces, kept free of logic. `CookingRecipe` puts a recipe, its tracker and its confetti together |
 | `web/test` | The website's tests |

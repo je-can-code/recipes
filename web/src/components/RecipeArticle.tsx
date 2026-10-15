@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { withTimers } from '../services/durations';
 import { currentStep } from '../services/progress';
 import type { Progress } from '../services/progress';
-import { placeOf } from '../services/shelves';
+import { homeAddress, placeOf } from '../services/shelves';
 import type { RecipeDetail, RecipeEntry } from '../types';
 import { Icon } from './Icons';
 
@@ -53,7 +53,7 @@ const RecipeArticle = (props: RecipeArticleProps): React.JSX.Element =>
             {
               return (
                 <li key={tag}>
-                  <Link to={`/search?q=${encodeURIComponent(tag)}`}>{tag}</Link>
+                  <Link to={homeAddress([], tag)}>{tag}</Link>
                 </li>
               );
             })}
