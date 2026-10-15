@@ -8,3 +8,9 @@ server/internal/site/dist/*
 # the https certificates belong to this machine, and the authority's private key must never leave it. The
 # leading slash keeps this to the top-level folder, not the Go package that makes them.
 /certs/
+
+# each machine's own settings, with its own paths. config.example.yaml is the one that's shared.
+/config.yaml
+
+# the release zips, which `bun run release` builds and a release on GitHub carries.
+/release/

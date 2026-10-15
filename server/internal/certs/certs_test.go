@@ -90,6 +90,32 @@ func TestIssueCoversNoOtherName(t *testing.T) {
 	}
 }
 
+// TestIssueCoversAnAddressAsAnAddress covers an IP address among the names, which a browser only accepts
+// when the certificate lists it as an address rather than a host name.
+func TestIssueCoversAnAddressAsAnAddress(t *testing.T) {
+	// Arrange.
+	folder := t.TempDir()
+	withAddress := []string{"recipes.local", "localhost", "192.0.2.10"}
+
+	// Act.
+	_, err := Issue(folder, "Recipes on j-desktop", withAddress, now)
+
+	// Assert.
+	if err != nil {
+		t.Fatal(err)
+	}
+	site := readCertificate(t, filepath.Join(folder, SiteFile))
+	if strings.Join(site.DNSNames, " ") != "recipes.local localhost" || len(site.IPAddresses) != 1 || site.IPAddresses[0].String() != "192.0.2.10" {
+		t.Fatalf("got names %q and addresses %v", site.DNSNames, site.IPAddresses)
+	}
+	if err := verifyFor(t, folder, "192.0.2.10", now); err != nil {
+		t.Fatalf("doesn't verify for its address: %v", err)
+	}
+	if err := verifyFor(t, folder, "192.0.2.11", now); err == nil {
+		t.Fatal("verified for an address it wasn't made for")
+	}
+}
+
 // TestIssueStaysUnderApplesLimit covers how long the site certificate lasts: under the 825 days Apple
 // accepts from an authority a person installed, and good until then.
 func TestIssueStaysUnderApplesLimit(t *testing.T) {

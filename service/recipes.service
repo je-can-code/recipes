@@ -1,21 +1,26 @@
-# The recipes website, always on: it starts with the desktop, runs as you, and needs no login.
+# Recipes, always on: it starts with the computer, runs as you, and needs nobody logged in.
 #
-# Install it by copying, not linking. A link would point into /mnt/exdrive, and if that drive mounted after
-# systemd went looking at boot, the service would quietly never start.
+# This assumes the program sits at ~/recipes/recipes, with its config.yaml beside it, as it does when the
+# download is unzipped into a folder named recipes in your home folder. Change the path below if yours is
+# elsewhere. Then:
 #
-#   cp service/recipes.service ~/.config/systemd/user/
+#   cp recipes.service ~/.config/systemd/user/
 #   systemctl --user daemon-reload
 #   systemctl --user enable --now recipes
+#   loginctl enable-linger "$USER"
 #
-# It never stops retrying. If the drive is late to mount, or port 80 isn't allowed yet, it tries again
-# every five seconds until it can listen, rather than giving up after a few attempts.
+# The last line starts it at boot, before anyone logs in. Install it by copying, not linking: if the folder
+# holding this file mounted late at boot, a link would leave the service quietly never starting.
+#
+# It never stops retrying. If its folder is late to mount, or its port isn't free yet, it tries again every
+# five seconds until it can listen, rather than giving up after a few attempts.
 
 [Unit]
 Description=Recipes website
 StartLimitIntervalSec=0
 
 [Service]
-ExecStart=/mnt/exdrive/dev/recipes/bin/recipes -config /mnt/exdrive/dev/recipes/config.yaml
+ExecStart=%h/recipes/recipes
 Restart=on-failure
 RestartSec=5
 

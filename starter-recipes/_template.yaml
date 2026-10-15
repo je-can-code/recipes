@@ -1,0 +1,58 @@
+# Recipe card format
+#
+# One recipe per file, named after the dish in kebab case: chorizo-biscuits-and-gravy.yaml. The name
+# without .yaml is the recipe's slug, and it's how other cards link to it. Files that start with an
+# underscore, like this one, are not recipes.
+#
+# The intro, ingredients, steps, notes and the before and after paragraphs are markdown, so **bold** and
+# links work there. Link to another recipe by its slug, with no extension:
+# [Flaky Layered Biscuits](flaky-layered-biscuits). Everything else is shown exactly as written.
+#
+# Write prose (intro, text, before, after) as a folded block, >-, where colons and brackets are safe.
+# On a single line they are not: "Too thin: simmer" turns into a key and a value, and a line that
+# starts with [ turns into a list. Quote any one-line value that contains ": " or ends with ":".
+
+# Required. The dish name, as the page shows it.
+title: Dish Name
+
+# Required. A short paragraph: what this is and why it works.
+intro: >-
+  One or two sentences about the dish.
+
+# Required: exactly one of serves or makes. A number or text both work: 2, 3 to 4, about 1 cup.
+serves: 2
+
+# Required. The way a person would say it.
+time: about 30 minutes
+
+# Optional. Words to find the recipe by, like beef, brunch or so2. Search looks at these, the title, and
+# the name of the collection folder the card sits in.
+tags: [ brunch, pork ]
+
+# Required. A list of groups. Each has items, plus an optional name and an optional paragraph after
+# the list. A recipe with one plain list has a single group with no name.
+ingredients:
+  - name: Sauce
+    items:
+      - 1 cup something, the way a person would write it
+      - Salt, to taste
+    after: >-
+      A paragraph under this group's list, like a substitution.
+
+# Required. The steps in order, each with a short bold lead the cook can find at a glance. Before and
+# after are optional.
+method:
+  before: >-
+    Anything to read before step 1, like how the timing works.
+  steps:
+    - lead: Do the first thing.
+      text: >-
+        The rest of the step.
+  after: |-
+    Anything after the last step. A table needs |- instead of >- so its rows stay on separate lines.
+
+# Optional. Fixes, variations and storage, each with a bold lead.
+notes:
+  - lead: "Too thick:"
+    text: >-
+      stir in a splash of milk.

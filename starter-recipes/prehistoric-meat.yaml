@@ -1,0 +1,96 @@
+title: Prehistoric Meat
+
+intro: >-
+  An interpretation. Star Ocean only ever shows Prehistoric Meat as a cartoon hunk on a bone, and Japanese
+  home cooks make that real as manga niku ("manga meat"): seasoned ground meat molded around a bone, wrapped
+  in thin meat and roasted. This one is hambagu mix around a burdock root "bone", wrapped in bacon and
+  glazed with ketchup, Worcestershire and butter.
+
+serves: 2 to 4
+time: about 1 hour 15 minutes
+tags: [ beef, dinner, pork, game, star-ocean, so1, so3 ]
+
+ingredients:
+  - name: The bones
+    items:
+      - 1 burdock root (gobo), about 1 inch thick at the wide end, from Uwajimaya
+  - name: The meat
+    items:
+      - 1 small onion, minced fine
+      - 1 tbsp butter
+      - 1/2 cup panko
+      - 1/4 cup milk
+      - 1 1/2 lb ground meat, half beef and half pork (or all 80/20 beef)
+      - 1 egg
+      - 1 tsp salt
+      - 1/2 tsp black pepper
+      - 1/4 tsp ground nutmeg
+      - 12 slices regular bacon (not thick-cut)
+  - name: Glaze
+    items:
+      - 1/4 cup ketchup
+      - 2 tbsp Worcestershire sauce
+      - 1 tbsp butter
+      - 1 tbsp water
+
+method:
+  steps:
+    - lead: Heat the oven.
+      text: >-
+        Set it to 400°F and give it a good 20 minutes, longer than the beep says. Line a baking sheet with
+        foil.
+    - lead: Cook the onion.
+      text: >-
+        Melt the butter in the skillet over medium and cook the onion for 5 to 6 minutes, until soft and
+        golden. Spread it on a plate to cool. Hot onion would start melting the fat in the meat.
+    - lead: Make the bones.
+      text: >-
+        Scrub the burdock, peel it, and cut four pieces about 7 inches long from the thick end. Keep them in
+        a bowl of water until you need them, since cut burdock darkens fast. They're the handles, not
+        dinner.
+    - lead: Soak the panko.
+      text: >-
+        Stir the panko and milk together in a big bowl and let it sit for 5 minutes.
+    - lead: Mix the meat.
+      text: >-
+        Add the ground meat, egg, salt, pepper, nutmeg and the cooled onion. Knead it with one hand for 1 to
+        2 minutes, until it turns pale and sticky and holds together in one mass. That stickiness is what
+        lets it grip the bone.
+    - lead: Shape it around the bones.
+      text: >-
+        Divide the meat into four. With wet hands, flatten one portion into an oval about 1 inch thick in
+        your palm. Lay a burdock piece down the middle with 3 inches sticking out one end, then close the
+        meat around it into a fat drumstick shape. Pinch the seam shut and toss it from hand to hand a few
+        times to push out air pockets, the same as hambagu.
+    - lead: Wrap in bacon.
+      text: >-
+        Wind 3 slices around each one, starting at the bone end and overlapping a little as you go. Tuck the
+        last end underneath. Set them seam side down on the baking sheet.
+    - lead: Roast.
+      text: >-
+        Roast for 35 to 40 minutes, until the bacon is browned and the thickest part reads 160°F. Probe
+        toward the middle, next to the bone.
+    - lead: Make the glaze.
+      text: >-
+        While they roast, simmer the ketchup, Worcestershire, butter and water in a small pot for 1 minute.
+    - lead: Glaze and finish.
+      text: >-
+        Brush the glaze all over and roast 5 minutes more, until it's sticky.
+    - lead: Rest and serve.
+      text: >-
+        Let them rest for 5 minutes. They're good on a bed of arugula, with the pan juices and the last of
+        the glaze poured over to wilt it. Eat them by the bone.
+
+notes:
+  - lead: "No burdock:"
+    text: >-
+      a thick carrot, peeled, works the same. It just looks less like a bone.
+  - lead: "Bacon not crisp enough:"
+    text: >-
+      finish them in the air fryer at 400°F for 3 to 4 minutes.
+  - lead: "Bacon slipping:"
+    text: >-
+      pin the loose ends with toothpicks, and pull them out before serving.
+  - lead: Leftovers
+    text: >-
+      reheat in the air fryer at 350°F for 6 to 8 minutes.

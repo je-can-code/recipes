@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io/fs"
 	"math/big"
+	"net"
 	"os"
 	"path/filepath"
 	"time"
@@ -50,7 +51,8 @@ type Issued struct {
 }
 
 // Issue makes the certificate authority in folder if there isn't one yet, then issues the site a new
-// certificate for names, replacing any old one. The authority is kept from one run to the next, so
+// certificate for names, replacing any old one. A name can be an IP address, like 192.168.1.23, for a
+// device that reaches the site by typing its address. The authority is kept from one run to the next, so
 // renewing the site's certificate never asks a device to trust anything new. Half an authority, a
 // certificate without its key or the other way round, is refused rather than replaced, since devices may
 // already trust it.
@@ -72,10 +74,12 @@ func Issue(folder string, authorityName string, names []string, now time.Time) (
 	if err != nil {
 		return Issued{}, err
 	}
+	hosts, addresses := splitNames(names)
 	template := &x509.Certificate{
 		SerialNumber: serial,
 		Subject:      pkix.Name{CommonName: names[0]},
-		DNSNames:     names,
+		DNSNames:     hosts,
+		IPAddresses:  addresses,
 		NotBefore:    now.Add(-time.Hour),
 		NotAfter:     now.Add(siteLifetime),
 		KeyUsage:     x509.KeyUsageDigitalSignature,
@@ -92,6 +96,21 @@ func Issue(folder string, authorityName string, names []string, now time.Time) (
 		return Issued{}, err
 	}
 	return Issued{MadeAuthority: made, Names: names, Expires: template.NotAfter}, nil
+}
+
+// splitNames sorts a certificate's names into the two kinds a certificate keeps apart: host names, and IP
+// addresses, which a browser only accepts when they're listed as addresses.
+func splitNames(names []string) ([]string, []net.IP) {
+	hosts := []string{}
+	addresses := []net.IP{}
+	for _, name := range names {
+		if ip := net.ParseIP(name); ip != nil {
+			addresses = append(addresses, ip)
+			continue
+		}
+		hosts = append(hosts, name)
+	}
+	return hosts, addresses
 }
 
 // loadOrMakeAuthority reads the authority from folder, or makes one when neither of its files is there.
