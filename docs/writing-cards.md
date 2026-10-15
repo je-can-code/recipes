@@ -37,15 +37,16 @@ itself is defined by `_template.yaml` in that folder; this is everything the for
   minutes" when the number is known. The site turns each one into a tap-to-start timer.
 - No em-dashes, no `--` standing in for one, and no emoji.
 
-## Star Ocean cards
+## Game cards
 
 - The title is the in-game name, as the game spells it. Fix only a plain typo in the source list.
 - The intro names the real dish behind it: omurice, kaki zoni, manga niku.
 - A made-up dish gets a real-world take you would actually cook, and its intro opens with "An
   interpretation." Playful is welcome; edible is required.
-- Tags list the food first, then `star-ocean` and the game: `tags: [ chicken, dinner, star-ocean, so1 ]`.
-  Reuse these before inventing a new one: beef, pork, chicken, seafood, egg, vegetarian, rice, noodles,
-  soup, salad, side, sauce, dessert, baking, drink, breakfast, brunch, lunch, dinner, snack.
+- Tags list the food first, then `game`, the series and the game itself:
+  `tags: [ chicken, dinner, game, star-ocean, so1 ]`. Every card from a game carries `game`. Reuse these
+  food tags before inventing a new one: beef, pork, chicken, seafood, egg, vegetarian, rice, noodles, soup,
+  salad, side, sauce, dessert, baking, drink, breakfast, brunch, lunch, dinner, snack.
 
 ## The kitchen
 
