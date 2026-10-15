@@ -10,7 +10,7 @@ let remembered: string[] = [];
 
 /**
  * The open courses, and a way to open or close one. Every home page shares the same list, so switching
- * shelves keeps a course open: open the desserts, and each game's desserts are waiting.
+ * shelves keeps a course open: open the desserts, and each collection's desserts are waiting.
  * @returns {[ string[], (heading: string) => void ]} The open courses' headings, and the toggle.
  */
 const useOpenCourses = (): [ string[], (heading: string) => void ] =>

@@ -6,13 +6,13 @@ import type { RecipeSummary } from '../../src/types';
  * Builds a recipe summary with the fields search reads, and placeholders for the rest.
  * @param {string} slug The recipe's name.
  * @param {string} title The recipe's title.
- * @param {string} collection The recipe's collection, or an empty string for the top level.
+ * @param {string} folder The folder the card sits in, or an empty string for the top level.
  * @param {string[]} tags The recipe's tags.
  * @returns {RecipeSummary} The summary.
  */
-const summary = (slug: string, title: string, collection: string, tags: string[]): RecipeSummary =>
+const summary = (slug: string, title: string, folder: string, tags: string[]): RecipeSummary =>
 {
-  return { slug, title, collection, tags, serves: '2', makes: '', time: 'about 10 minutes' };
+  return { slug, title, folder, tags, serves: '2', makes: '', time: 'about 10 minutes' };
 };
 
 const steak = summary('steak', 'Steak, Garlic Mash and Asparagus', '', [ 'beef', 'dinner' ]);
@@ -22,7 +22,7 @@ const everything = [ climax, chorizo, steak ];
 
 /*
  * searchRecipes owes the results page the recipes a person meant: every word they typed found somewhere
- * in a recipe's title, tags or collection, capitals ignored, in the order the list already had. Matching
+ * in a recipe's title, tags or folder, capitals ignored, in the order the list already had. Matching
  * too much buries the recipe under others; matching too little hides it, and nobody goes looking for a
  * recipe they think isn't there. Each test keeps a near miss beside the match, so "matches this one" can
  * never pass for "matches everything".
@@ -81,9 +81,9 @@ describe('searchRecipes', () =>
       .toEqual([ chorizo ]);
   });
 
-  it('finds a collection', () =>
+  it('finds a folder', () =>
   {
-    // Arrange- only one recipe is in a collection at all.
+    // Arrange- only one recipe sits in a folder at all.
     const query = 'star';
 
     // Act.

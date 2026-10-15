@@ -209,7 +209,7 @@ const timelyRecipe = (): RecipeDetail =>
   return {
     slug: 'test-stew',
     title: 'Test Stew',
-    collection: '',
+    folder: '',
     tags: [],
     serves: '2',
     makes: '',

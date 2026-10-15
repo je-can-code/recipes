@@ -48,9 +48,10 @@ How a recipe card should read, for anyone writing one, person or agent. The form
   food tags before inventing a new one: beef, pork, chicken, seafood, egg, vegetarian, rice, noodles, soup,
   salad, side, sauce, dessert, baking, drink, breakfast, brunch, lunch, dinner, snack.
 - Give every card at least one course tag (breakfast, brunch, lunch, dinner, soup, salad, side, sauce,
-  snack, baking, dessert or drink). A game's shelf lists its dishes under those headings.
-- A game's first cards need its entry in `_games.yaml` in the cards folder, or the check command reports
-  them as on no shelf. Leave that file to whoever runs the batch, since writers work side by side.
+  snack, baking, dessert or drink). Every shelf lists its recipes under those headings.
+- A game gets a shelf of its own from an entry in `_collections.yaml` in the cards folder, keyed by the
+  game's tag; until it has one, its cards sit on Home Cooking. Leave that file to whoever runs the batch,
+  since writers work side by side.
 
 ## The kitchen
 

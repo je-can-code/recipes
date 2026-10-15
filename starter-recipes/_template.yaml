@@ -26,7 +26,8 @@ serves: 2
 time: about 30 minutes
 
 # Optional. Words to find the recipe by, like beef, brunch or so2. Search looks at these, the title, and
-# the name of the collection folder the card sits in.
+# the name of the folder the card sits in. A tag listed in _collections.yaml also puts the recipe on that
+# collection's shelf.
 tags: [ brunch, pork ]
 
 # Required. A list of groups. Each has items, plus an optional name and an optional paragraph after

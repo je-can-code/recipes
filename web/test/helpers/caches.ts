@@ -146,9 +146,9 @@ const catalogOf = (slugs: string[]): Catalog =>
   return {
     recipes: slugs.map((slug) =>
     {
-      return { slug, title: slug, collection: '', tags: [], serves: '', makes: '', time: '' };
+      return { slug, title: slug, folder: '', tags: [], serves: '', makes: '', time: '' };
     }),
-    games: [],
+    collections: [],
     problems: [],
   };
 };

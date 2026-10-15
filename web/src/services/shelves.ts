@@ -1,16 +1,14 @@
 import type { Catalog, RecipeSummary } from '../types';
-import { collectionLabel, topLevelLabel } from './collections';
 import { searchRecipes } from './search';
 
 /**
- * The tag every dish from a game carries. Those dishes sit on their game's shelf, so Home Cooking leaves
- * them out.
+ * The shelf for every recipe in no collection, which is where a new card lands until a collection takes it.
  */
-const gameTag = 'game';
+const homeLabel = 'Home Cooking';
 
 /**
- * The key Home Cooking goes by in the address. A collection goes by its folder's name and a game by its
- * tag, so a folder and a game sharing a name would light up together, which does no harm.
+ * The key Home Cooking goes by in the address. A collection goes by its tag, so a collection tagged home
+ * would light up with it, which does no harm.
  */
 const homeKey = 'home';
 
@@ -20,8 +18,8 @@ const homeKey = 'home';
 const everythingName = 'Everything';
 
 /**
- * One shelf on the home page: Home Cooking, a collection, or a game. The key is how the address names it,
- * the label goes on its chip, and the name goes over its list.
+ * One shelf on the home page: Home Cooking or a collection. The key is how the address names it, the label
+ * goes on its chip, and the name goes over its list.
  */
 interface Shelf
 {
@@ -76,53 +74,36 @@ const claimOrder = [
 const otherHeading = 'Everything else';
 
 /**
- * Builds every shelf for the home page: Home Cooking first, then each collection by name, then each game
- * in the order the games file lists them. Home Cooking is the top level minus the games' dishes, and it's
- * always there, even empty. A game's shelf holds every recipe carrying its tag, wherever the card sits,
- * and a dish from several games is on each of their shelves.
- * @param {Catalog} catalog The recipes and the games, with the recipes already in the order to show them.
+ * Builds every shelf for the home page: Home Cooking first, then each collection in the order the
+ * collections file lists them. A collection's shelf holds every recipe carrying its tag, wherever the card
+ * sits, and a recipe in several collections is on each of their shelves. Home Cooking holds every recipe in
+ * no collection at all, so no card can go missing from the home page, and it's always there, even empty.
+ * @param {Catalog} catalog The recipes and the collections, with the recipes already in the order to show them.
  * @returns {Shelf[]} Every shelf, each with its recipes in that same order.
  */
 const buildShelves = (catalog: Catalog): Shelf[] =>
 {
-  const { recipes, games } = catalog;
+  const { recipes, collections } = catalog;
+  const collected = new Set(collections.map((collection) => collection.tag));
 
   const home: Shelf = {
     key: homeKey,
-    label: topLevelLabel,
-    name: topLevelLabel,
-    recipes: recipes.filter((recipe) => recipe.collection === '' && recipe.tags.includes(gameTag) === false),
+    label: homeLabel,
+    name: homeLabel,
+    recipes: recipes.filter((recipe) => recipe.tags.some((tag) => collected.has(tag)) === false),
   };
 
-  const collections = collectionNames(recipes).map((folder): Shelf =>
-  {
-    const label = collectionLabel(folder);
-    return { key: folder, label, name: label, recipes: recipes.filter((recipe) => recipe.collection === folder) };
-  });
-
-  const gameShelves = games.map((game): Shelf =>
+  const shelves = collections.map((collection): Shelf =>
   {
     return {
-      key: game.tag,
-      label: game.label,
-      name: game.name,
-      recipes: recipes.filter((recipe) => recipe.tags.includes(game.tag)),
+      key: collection.tag,
+      label: collection.label,
+      name: collection.name,
+      recipes: recipes.filter((recipe) => recipe.tags.includes(collection.tag)),
     };
   });
 
-  return [ home, ...collections, ...gameShelves ];
-};
-
-/**
- * Every collection the recipes sit in, once each, by name.
- * @param {RecipeSummary[]} recipes Every recipe.
- * @returns {string[]} The collections' folder names, leaving out the top level.
- */
-const collectionNames = (recipes: RecipeSummary[]): string[] =>
-{
-  const names = new Set(recipes.map((recipe) => recipe.collection));
-  names.delete('');
-  return [ ...names ].sort((left, right) => left.localeCompare(right));
+  return [ home, ...shelves ];
 };
 
 /**
@@ -240,17 +221,6 @@ const describeCount = (count: number, query: string): string =>
 const offersEverything = (count: number, lit: Shelf[], query: string): boolean =>
 {
   return count === 0 && lit.length > 0 && isSearching(query);
-};
-
-/**
- * Whether each row names where its recipe lives. A list from one shelf doesn't need it, since the shelf's
- * name is over the list, but a list mixing shelves does.
- * @param {Shelf[]} lit The lit shelves.
- * @returns {boolean} True when rows name their places.
- */
-const namesPlaces = (lit: Shelf[]): boolean =>
-{
-  return lit.length !== 1;
 };
 
 /**
@@ -382,22 +352,6 @@ const courseBodyId = (heading: string): string =>
   return `course-${heading.toLowerCase().split(' ').join('-')}`;
 };
 
-/**
- * Where a recipe lives, for the line above its title: its collection, or Home Cooking for the top level. A
- * game's dish at the top level lives on its game's shelf instead, and its tags already name the game, so it
- * gets no line at all.
- * @param {RecipeSummary} recipe The recipe.
- * @returns {string} The place to name, or an empty string when there's none to name.
- */
-const placeOf = (recipe: RecipeSummary): string =>
-{
-  if (recipe.collection === '' && recipe.tags.includes(gameTag))
-  {
-    return '';
-  }
-  return collectionLabel(recipe.collection);
-};
-
 export {
   barBackground,
   buildShelves,
@@ -413,10 +367,8 @@ export {
   hueOf,
   isSearching,
   litShelves,
-  namesPlaces,
   offersEverything,
   pageTitle,
-  placeOf,
   recipesOn,
   toggleCourse,
   toggleShelf,

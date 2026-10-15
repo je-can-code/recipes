@@ -21,8 +21,9 @@ type Recipe struct {
 	// Slug is the recipe's name: its file name without .yaml, and what links use to reach it.
 	Slug string
 
-	// Collection is the folder the card sits in, or empty for a card at the top level.
-	Collection string
+	// Folder is the folder the card sits in, or empty for a card at the top level. A folder only keeps
+	// cards tidy; shelves come from collections.
+	Folder string
 
 	// File is where the card lives, relative to the recipes folder, for messages.
 	File string
@@ -31,13 +32,13 @@ type Recipe struct {
 	Page Page
 }
 
-// Library is the recipes folder at one moment: every recipe that loaded, sorted by title, the games with
-// shelves on the home page, in the games file's order, and every problem found along the way. All three
-// are always lists, never nil, so the site can show them as they are.
+// Library is the recipes folder at one moment: every recipe that loaded, sorted by title, the collections
+// with shelves on the home page, in the collections file's order, and every problem found along the way.
+// All three are always lists, never nil, so the site can show them as they are.
 type Library struct {
-	Recipes  []Recipe
-	Games    []Game
-	Problems []Problem
+	Recipes     []Recipe
+	Collections []Collection
+	Problems    []Problem
 }
 
 // Find returns the recipe with the given name, and whether there is one.
@@ -52,15 +53,15 @@ func (library Library) Find(slug string) (Recipe, bool) {
 
 // cardFile is a card waiting to be read.
 type cardFile struct {
-	path       string
-	name       string
-	collection string
+	path   string
+	name   string
+	folder string
 }
 
-// Load reads every card in the folder. Cards at the top level have no collection; cards one folder down
-// belong to a collection named after that folder. It only fails when the folder itself can't be read,
-// since then there is no cookbook to show. Every other problem, from a card that won't decode to a link
-// to a recipe that doesn't exist, lands in Problems while everything else still loads.
+// Load reads every card in the folder, at the top level and one folder down, and the collections file. It
+// only fails when the folder itself can't be read, since then there is no cookbook to show. Every other
+// problem, from a card that won't decode to a link to a recipe that doesn't exist, lands in Problems while
+// everything else still loads.
 func Load(folder string) (Library, error) {
 	files, problems, err := findCardFiles(folder)
 	if err != nil {
@@ -110,16 +111,14 @@ func Load(folder string) (Library, error) {
 		return leftTitle < rightTitle
 	})
 
-	// read the games last, so a game's dish missing from every shelf can be reported.
-	games, gameProblems := loadGames(folder)
-	problems = append(problems, gameProblems...)
-	problems = append(problems, findShelfless(recipes, games)...)
+	collections, collectionProblems := loadCollections(folder)
+	problems = append(problems, collectionProblems...)
 
-	return Library{Recipes: recipes, Games: games, Problems: problems}, nil
+	return Library{Recipes: recipes, Collections: collections, Problems: problems}, nil
 }
 
 // findCardFiles lists the cards to read: the top level first, so a top-level card keeps its name over a
-// collection card that repeats it, then each collection in name order. Anything the folder holds that
+// card in a folder that repeats it, then each folder in name order. Anything the recipes folder holds that
 // isn't a card is passed over quietly, except the mistakes worth knowing about.
 func findCardFiles(folder string) ([]cardFile, []Problem, error) {
 	entries, err := os.ReadDir(folder)
@@ -129,35 +128,35 @@ func findCardFiles(folder string) ([]cardFile, []Problem, error) {
 
 	files := []cardFile{}
 	problems := []Problem{}
-	collections := []string{}
+	folders := []string{}
 	for _, entry := range entries {
 		if isSkipped(entry.Name()) {
 			continue
 		}
 		if entry.IsDir() {
-			collections = append(collections, entry.Name())
+			folders = append(folders, entry.Name())
 			continue
 		}
 		files, problems = classify(files, problems, folder, "", entry.Name())
 	}
 
-	for _, collection := range collections {
-		collectionFolder := filepath.Join(folder, collection)
-		collectionEntries, err := os.ReadDir(collectionFolder)
+	for _, inner := range folders {
+		innerPath := filepath.Join(folder, inner)
+		innerEntries, err := os.ReadDir(innerPath)
 		if err != nil {
-			problems = append(problems, Problem{File: collection + "/", Message: "Couldn't read this folder: " + err.Error()})
+			problems = append(problems, Problem{File: inner + "/", Message: "Couldn't read this folder: " + err.Error()})
 			continue
 		}
 
-		for _, entry := range collectionEntries {
+		for _, entry := range innerEntries {
 			if isSkipped(entry.Name()) {
 				continue
 			}
 			if entry.IsDir() {
-				problems = append(problems, findTooDeep(collectionFolder, collection, entry.Name())...)
+				problems = append(problems, findTooDeep(innerPath, inner, entry.Name())...)
 				continue
 			}
-			files, problems = classify(files, problems, collectionFolder, collection, entry.Name())
+			files, problems = classify(files, problems, innerPath, inner, entry.Name())
 		}
 	}
 
@@ -166,26 +165,26 @@ func findCardFiles(folder string) ([]cardFile, []Problem, error) {
 
 // classify adds a file to the cards to read when it is one. A .yml file is reported rather than read,
 // since it is almost certainly a card with the wrong ending; every other file is left alone.
-func classify(files []cardFile, problems []Problem, folder string, collection string, name string) ([]cardFile, []Problem) {
+func classify(files []cardFile, problems []Problem, path string, folder string, name string) ([]cardFile, []Problem) {
 	relative := name
-	if collection != "" {
-		relative = collection + "/" + name
+	if folder != "" {
+		relative = folder + "/" + name
 	}
 
 	switch filepath.Ext(name) {
 	case ".yaml":
-		files = append(files, cardFile{path: filepath.Join(folder, name), name: relative, collection: collection})
+		files = append(files, cardFile{path: filepath.Join(path, name), name: relative, folder: folder})
 	case ".yml":
 		problems = append(problems, Problem{File: relative, Message: "Cards end in .yaml, not .yml. Rename it so it gets read."})
 	}
 	return files, problems
 }
 
-// findTooDeep reports every card inside a folder within a collection. Collections are one level deep,
+// findTooDeep reports every card inside a folder within a folder. Cards are read one folder down at most,
 // so these cards are never read, and saying so beats having them silently missing from the site.
-func findTooDeep(collectionFolder string, collection string, nested string) []Problem {
+func findTooDeep(innerPath string, inner string, nested string) []Problem {
 	problems := []Problem{}
-	_ = filepath.WalkDir(filepath.Join(collectionFolder, nested), func(path string, entry fs.DirEntry, err error) error {
+	_ = filepath.WalkDir(filepath.Join(innerPath, nested), func(path string, entry fs.DirEntry, err error) error {
 		// an unreadable folder has nothing to report, and skipped names stay skipped at any depth.
 		if err != nil {
 			return nil
@@ -202,10 +201,10 @@ func findTooDeep(collectionFolder string, collection string, nested string) []Pr
 			return nil
 		}
 
-		inside, _ := filepath.Rel(collectionFolder, path)
+		inside, _ := filepath.Rel(innerPath, path)
 		problems = append(problems, Problem{
-			File:    collection + "/" + filepath.ToSlash(inside),
-			Message: "Cards sit at the top level or one folder down, in a collection. Move this one up so it gets read.",
+			File:    inner + "/" + filepath.ToSlash(inside),
+			Message: "Cards sit at the top level or one folder down. Move this one up so it gets read.",
 		})
 		return nil
 	})
@@ -229,7 +228,7 @@ func readCard(file cardFile) (Recipe, []string) {
 	}
 
 	slug := strings.TrimSuffix(filepath.Base(file.path), ".yaml")
-	return Recipe{Slug: slug, Collection: file.collection, File: file.name, Card: card}, nil
+	return Recipe{Slug: slug, Folder: file.folder, File: file.name, Card: card}, nil
 }
 
 // renderRecipes renders every recipe's page now that all the names are known. A link to a missing recipe

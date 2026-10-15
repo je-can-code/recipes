@@ -11,21 +11,21 @@ import (
 
 // Summary is what the home page and search need to know about a recipe.
 type Summary struct {
-	Slug       string   `json:"slug"`
-	Title      string   `json:"title"`
-	Collection string   `json:"collection"`
-	Tags       []string `json:"tags"`
-	Serves     string   `json:"serves"`
-	Makes      string   `json:"makes"`
-	Time       string   `json:"time"`
+	Slug   string   `json:"slug"`
+	Title  string   `json:"title"`
+	Folder string   `json:"folder"`
+	Tags   []string `json:"tags"`
+	Serves string   `json:"serves"`
+	Makes  string   `json:"makes"`
+	Time   string   `json:"time"`
 }
 
-// Catalog answers GET /api/recipes: every recipe, the games the home page gives shelves to, and every
-// problem with the cards, so the site can show a broken card instead of quietly leaving it out.
+// Catalog answers GET /api/recipes: every recipe, the collections the home page gives shelves to, and
+// every problem with the cards, so the site can show a broken card instead of quietly leaving it out.
 type Catalog struct {
-	Recipes  []Summary       `json:"recipes"`
-	Games    []cards.Game    `json:"games"`
-	Problems []cards.Problem `json:"problems"`
+	Recipes     []Summary          `json:"recipes"`
+	Collections []cards.Collection `json:"collections"`
+	Problems    []cards.Problem    `json:"problems"`
 }
 
 // Detail answers GET /api/recipes/{slug}: the summary, plus the page with its markdown rendered.
@@ -63,7 +63,7 @@ func listRecipes(shelf *cards.Shelf) http.Handler {
 			return
 		}
 
-		catalog := Catalog{Recipes: []Summary{}, Games: library.Games, Problems: library.Problems}
+		catalog := Catalog{Recipes: []Summary{}, Collections: library.Collections, Problems: library.Problems}
 		for _, recipe := range library.Recipes {
 			catalog.Recipes = append(catalog.Recipes, summarize(recipe))
 		}
@@ -99,13 +99,13 @@ func summarize(recipe cards.Recipe) Summary {
 	}
 
 	return Summary{
-		Slug:       recipe.Slug,
-		Title:      recipe.Card.Title,
-		Collection: recipe.Collection,
-		Tags:       tags,
-		Serves:     recipe.Card.Serves,
-		Makes:      recipe.Card.Makes,
-		Time:       recipe.Card.Time,
+		Slug:   recipe.Slug,
+		Title:  recipe.Card.Title,
+		Folder: recipe.Folder,
+		Tags:   tags,
+		Serves: recipe.Card.Serves,
+		Makes:  recipe.Card.Makes,
+		Time:   recipe.Card.Time,
 	}
 }
 

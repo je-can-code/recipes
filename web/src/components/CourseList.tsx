@@ -4,15 +4,13 @@ import { Icon } from './Icons';
 import { RecipeLinks } from './RecipeLinks';
 
 /**
- * The courses to list, which are open, whether a search is on, whether rows name where each recipe lives,
- * and what a tap on a course does.
+ * The courses to list, which are open, whether a search is on, and what a tap on a course does.
  */
 interface CourseListProps
 {
   groups: CourseGroup[];
   open: string[];
   isSearching: boolean;
-  showPlace: boolean;
   onToggle: (heading: string) => void;
 }
 
@@ -23,7 +21,7 @@ interface CourseListProps
  * @param {CourseListProps} props The courses and how to show them.
  * @returns {React.JSX.Element} The courses.
  */
-const CourseList = ({ groups, open, isSearching, showPlace, onToggle }: CourseListProps): React.JSX.Element =>
+const CourseList = ({ groups, open, isSearching, onToggle }: CourseListProps): React.JSX.Element =>
 {
   return (
     <div className="courses">
@@ -38,7 +36,7 @@ const CourseList = ({ groups, open, isSearching, showPlace, onToggle }: CourseLi
                 <span className="course-name">{group.heading}</span>
                 <span className="course-count">{group.recipes.length}</span>
               </h3>
-              <RecipeLinks recipes={group.recipes} showPlace={showPlace} />
+              <RecipeLinks recipes={group.recipes} />
             </section>
           );
         }
@@ -65,7 +63,7 @@ const CourseList = ({ groups, open, isSearching, showPlace, onToggle }: CourseLi
             </h3>
             <div id={bodyId} className={isOpen ? 'course-body course-body-open' : 'course-body'} inert={isOpen === false}>
               <div className="course-body-inner">
-                <RecipeLinks recipes={group.recipes} showPlace={showPlace} />
+                <RecipeLinks recipes={group.recipes} />
               </div>
             </div>
           </section>

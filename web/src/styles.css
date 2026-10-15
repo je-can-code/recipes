@@ -521,16 +521,6 @@ a
   border-top: none;
 }
 
-.recipe-collection
-{
-  margin: 2rem 0 0.5rem;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 /* a list of recipes: every row a big tap target. */
 .recipe-links
 {
@@ -626,11 +616,6 @@ a
 .recipe-header
 {
   padding: 0.75rem 0 0.25rem;
-}
-
-.recipe-collection
-{
-  margin-top: 0.5rem;
 }
 
 .recipe h1

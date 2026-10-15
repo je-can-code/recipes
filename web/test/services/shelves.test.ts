@@ -14,38 +14,36 @@ import {
   hueOf,
   isSearching,
   litShelves,
-  namesPlaces,
   offersEverything,
   pageTitle,
-  placeOf,
   recipesOn,
   toggleCourse,
   toggleShelf,
 } from '../../src/services/shelves';
 import type { Shelf } from '../../src/services/shelves';
-import type { Catalog, Game, RecipeSummary } from '../../src/types';
+import type { Catalog, Collection, RecipeSummary } from '../../src/types';
 
 /**
  * Builds a recipe summary with the fields shelves read, and placeholders for the rest.
  * @param {string} slug The recipe's name, which is also its title.
- * @param {string} collection The recipe's collection, or an empty string for the top level.
+ * @param {string} folder The folder the card sits in, or an empty string for the top level.
  * @param {string[]} tags The recipe's tags.
  * @returns {RecipeSummary} The summary.
  */
-const recipe = (slug: string, collection: string, tags: string[]): RecipeSummary =>
+const recipe = (slug: string, folder: string, tags: string[]): RecipeSummary =>
 {
-  return { slug, title: slug, collection, tags, serves: '2', makes: '', time: 'about 10 minutes' };
+  return { slug, title: slug, folder, tags, serves: '2', makes: '', time: 'about 10 minutes' };
 };
 
 /**
- * Builds a catalog of the given recipes and games, with no problems.
+ * Builds a catalog of the given recipes and collections, with no problems.
  * @param {RecipeSummary[]} recipes The recipes, in the order to show them.
- * @param {Game[]} games The games with shelves, in the games file's order.
+ * @param {Collection[]} collections The collections with shelves, in the collections file's order.
  * @returns {Catalog} The catalog.
  */
-const catalogOf = (recipes: RecipeSummary[], games: Game[]): Catalog =>
+const catalogOf = (recipes: RecipeSummary[], collections: Collection[]): Catalog =>
 {
-  return { recipes, games, problems: [] };
+  return { recipes, collections, problems: [] };
 };
 
 /**
@@ -59,16 +57,16 @@ const slugsOf = (recipes: RecipeSummary[]): string[] =>
 };
 
 /**
- * Two games, listed out of name order so the order kept can only be the file's own.
+ * Two collections, listed out of name order so the order kept can only be the file's own.
  */
-const games: Game[] = [
+const collections: Collection[] = [
   { tag: 'so2', label: 'SO2', name: 'Star Ocean: The Second Story' },
   { tag: 'so1', label: 'SO1', name: 'Star Ocean: First Departure' },
 ];
 
 /**
- * A small cookbook: one dish of the top level's own, a dish from each game, one from both, one only
- * tagged like a game (so22 is not so2), and none in a collection, so the chips run Home Cooking, SO2, SO1.
+ * A small cookbook: a dish in no collection, a dish from each game, one from both, and one only tagged like
+ * a game, since so22 is not so2, so the chips run Home Cooking, SO2, SO1.
  */
 const cookbook = [
   recipe('chorizo-gravy', '', [ 'brunch', 'pork' ]),
@@ -81,71 +79,62 @@ const cookbook = [
 /**
  * The cookbook's shelves: Home Cooking, SO2 and SO1, in that order.
  */
-const shelves = buildShelves(catalogOf(cookbook, games));
+const shelves = buildShelves(catalogOf(cookbook, collections));
 const [ home, so2, so1 ] = shelves;
 
 /*
  * buildShelves owes the home page every shelf in a fixed order, Home Cooking first, and each shelf exactly
- * the recipes that belong on it. Home Cooking leaves out games' dishes, since those live on their games'
- * shelves, and a game's shelf takes a dish from anywhere, as long as it carries the game's tag.
+ * the recipes that belong on it. A collection's shelf takes a recipe from anywhere, as long as it carries
+ * the collection's tag, and Home Cooking takes every recipe in no collection, so none can go missing.
  */
 describe('buildShelves', () =>
 {
-  it('keeps games\' dishes and collections off Home Cooking', () =>
+  it('puts every recipe in no collection on Home Cooking, wherever its card sits', () =>
   {
-    // Arrange- a dish of the top level's own, a game's dish beside it, and a collection's recipe.
+    // Arrange- a card in a folder, a collection's dish, and one tagged like a collection but in none.
     const recipes = [
       recipe('chorizo-gravy', '', [ 'brunch', 'pork' ]),
-      recipe('sukiyaki', '', [ 'dinner', 'game', 'so4' ]),
       recipe('mojito', 'cocktails', [ 'drink' ]),
+      recipe('sukiyaki', '', [ 'dinner', 'game', 'so2' ]),
+      recipe('mystery-stew', '', [ 'dinner', 'game', 'so22' ]),
     ];
 
     // Act.
-    const [ first ] = buildShelves(catalogOf(recipes, []));
+    const [ first ] = buildShelves(catalogOf(recipes, collections));
 
     // Assert.
     expect(first)
-      .toEqual({ key: 'home', label: 'Home Cooking', name: 'Home Cooking', recipes: [ recipes[0] ] });
+      .toEqual({ key: 'home', label: 'Home Cooking', name: 'Home Cooking', recipes: [ recipes[0], recipes[1], recipes[3] ] });
   });
 
-  it('gives each collection a shelf, by name, after Home Cooking', () =>
+  it('gives each collection a shelf, in the collections file\'s order, holding every recipe with its tag', () =>
   {
-    // Arrange- the collections arrive out of name order.
-    const recipes = [
-      recipe('mojito', 'cocktails', [ 'drink' ]),
-      recipe('scones', 'baking', [ 'baking' ]),
-      recipe('chorizo-gravy', '', [ 'brunch' ]),
-      recipe('margarita', 'cocktails', [ 'drink' ]),
-    ];
-
-    // Act.
-    const built = buildShelves(catalogOf(recipes, []));
-
-    // Assert.
-    expect(built.map((shelf) => [ shelf.key, shelf.label, shelf.name, slugsOf(shelf.recipes) ]))
-      .toEqual([
-        [ 'home', 'Home Cooking', 'Home Cooking', [ 'chorizo-gravy' ] ],
-        [ 'baking', 'Baking', 'Baking', [ 'scones' ] ],
-        [ 'cocktails', 'Cocktails', 'Cocktails', [ 'mojito', 'margarita' ] ],
-      ]);
-  });
-
-  it('gives each game a shelf, in the games file\'s order, holding every dish with its tag', () =>
-  {
-    // Arrange- a collection's dish tagged for SO2 joins the cookbook.
+    // Arrange- a card in a folder, tagged for SO2, joins the cookbook.
     const recipes = [ ...cookbook, recipe('sake-spritz', 'cocktails', [ 'drink', 'game', 'so2' ]) ];
 
     // Act.
-    const built = buildShelves(catalogOf(recipes, games));
+    const built = buildShelves(catalogOf(recipes, collections));
 
     // Assert.
     expect(built.map((shelf) => [ shelf.key, shelf.label, shelf.name, slugsOf(shelf.recipes) ]))
       .toEqual([
-        [ 'home', 'Home Cooking', 'Home Cooking', [ 'chorizo-gravy' ] ],
-        [ 'cocktails', 'Cocktails', 'Cocktails', [ 'sake-spritz' ] ],
+        [ 'home', 'Home Cooking', 'Home Cooking', [ 'chorizo-gravy', 'mystery-stew' ] ],
         [ 'so2', 'SO2', 'Star Ocean: The Second Story', [ 'rice-omelet', 'sukiyaki', 'sake-spritz' ] ],
         [ 'so1', 'SO1', 'Star Ocean: First Departure', [ 'fruit-punch', 'rice-omelet' ] ],
       ]);
+  });
+
+  it('keeps Home Cooking when every recipe is in a collection', () =>
+  {
+    // Arrange.
+    const recipes = [ recipe('sukiyaki', '', [ 'dinner', 'so2' ]) ];
+
+    // Act.
+    const built = buildShelves(catalogOf(recipes, collections));
+
+    // Assert.
+    expect(built.map((shelf) => [ shelf.key, slugsOf(shelf.recipes) ]))
+      .toEqual([ [ 'home', [] ], [ 'so2', [ 'sukiyaki' ] ], [ 'so1', [] ] ]);
   });
 });
 
@@ -501,38 +490,6 @@ describe('offersEverything', () =>
 });
 
 /*
- * namesPlaces owes the rows a place name only when the list mixes shelves.
- */
-describe('namesPlaces', () =>
-{
-  it('leaves places off a list from one shelf', () =>
-  {
-    // Arrange.
-    const lit = [ home ];
-
-    // Act.
-    const named = namesPlaces(lit);
-
-    // Assert.
-    expect(named)
-      .toBe(false);
-  });
-
-  it('names places when no shelf or several are lit', () =>
-  {
-    // Arrange.
-    const choices = [ [], [ home, so2 ] ];
-
-    // Act.
-    const named = choices.map(namesPlaces);
-
-    // Assert.
-    expect(named)
-      .toEqual([ true, true ]);
-  });
-});
-
-/*
  * pageTitle owes a tab a title that says what it holds, the search first, since that's the most specific.
  */
 describe('pageTitle', () =>
@@ -865,64 +822,5 @@ describe('courseBodyId', () =>
     // Assert.
     expect(ids)
       .toEqual([ 'course-desserts', 'course-everything-else' ]);
-  });
-});
-
-/*
- * placeOf owes a recipe's page and a mixed list's rows the place the recipe lives, and never Home Cooking
- * for a game's dish, which the home page keeps off that shelf.
- */
-describe('placeOf', () =>
-{
-  it('names a recipe\'s collection', () =>
-  {
-    // Arrange.
-    const mojito = recipe('mojito', 'cocktails', [ 'drink' ]);
-
-    // Act.
-    const place = placeOf(mojito);
-
-    // Assert.
-    expect(place)
-      .toBe('Cocktails');
-  });
-
-  it('names Home Cooking for the top level\'s own dishes', () =>
-  {
-    // Arrange.
-    const gravy = recipe('chorizo-gravy', '', [ 'brunch' ]);
-
-    // Act.
-    const place = placeOf(gravy);
-
-    // Assert.
-    expect(place)
-      .toBe('Home Cooking');
-  });
-
-  it('names nothing for a game\'s dish at the top level', () =>
-  {
-    // Arrange.
-    const sukiyaki = recipe('sukiyaki', '', [ 'dinner', 'game', 'so4' ]);
-
-    // Act.
-    const place = placeOf(sukiyaki);
-
-    // Assert.
-    expect(place)
-      .toBe('');
-  });
-
-  it('names the collection for a game\'s dish in one', () =>
-  {
-    // Arrange.
-    const spritz = recipe('sake-spritz', 'cocktails', [ 'drink', 'game', 'so2' ]);
-
-    // Act.
-    const place = placeOf(spritz);
-
-    // Assert.
-    expect(place)
-      .toBe('Cocktails');
   });
 });

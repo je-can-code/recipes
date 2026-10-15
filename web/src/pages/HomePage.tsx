@@ -19,7 +19,6 @@ import {
   homeParameters,
   isSearching,
   litShelves,
-  namesPlaces,
   offersEverything,
   pageTitle,
   recipesOn,
@@ -134,7 +133,6 @@ const ShelfContents = (props: ShelfContentsProps): React.JSX.Element =>
         groups={groupByCourse(recipes)}
         open={openCourses}
         isSearching={isSearching(query)}
-        showPlace={namesPlaces(lit)}
         onToggle={onToggleCourse}
       />
     </section>

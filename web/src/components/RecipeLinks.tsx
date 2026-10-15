@@ -1,35 +1,26 @@
 import { Link } from 'react-router-dom';
-import { placeOf } from '../services/shelves';
 import type { RecipeSummary } from '../types';
 
 /**
- * The recipes to list, and whether each row also names where the recipe lives, which a list mixing shelves
- * needs and a list from one shelf doesn't.
+ * The recipes to list.
  */
 interface RecipeLinksProps
 {
   recipes: RecipeSummary[];
-  showPlace: boolean;
 }
 
 /**
  * A list of recipes, each a large tap target with its time and tags underneath.
- * @param {RecipeLinksProps} props The recipes, and whether to name where they live.
+ * @param {RecipeLinksProps} props The recipes.
  * @returns {React.JSX.Element} The list.
  */
-const RecipeLinks = ({ recipes, showPlace }: RecipeLinksProps): React.JSX.Element =>
+const RecipeLinks = ({ recipes }: RecipeLinksProps): React.JSX.Element =>
 {
   return (
     <ul className="recipe-links">
       {recipes.map((recipe) =>
       {
         const details = [ recipe.time, ...recipe.tags ];
-        const place = placeOf(recipe);
-        if (showPlace && place !== '')
-        {
-          details.unshift(place);
-        }
-
         return (
           <li key={recipe.slug}>
             <Link to={`/recipes/${recipe.slug}`}>

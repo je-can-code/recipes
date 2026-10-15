@@ -33,7 +33,7 @@ method:
         Whisk it.
 `
 
-// biscuitsCard is a complete card with no tags, in no collection's way.
+// biscuitsCard is a complete card with no tags.
 const biscuitsCard = `title: Biscuits
 intro: >-
   Biscuits.
@@ -90,7 +90,7 @@ func decode(t *testing.T, response *httptest.ResponseRecorder, target any) {
 }
 
 // TestListRecipesReturnsEverySummaryAndProblem covers the catalog: recipes in title order with their
-// collection and tags, and the broken card reported beside them.
+// folder and tags, and the broken card reported beside them.
 func TestListRecipesReturnsEverySummaryAndProblem(t *testing.T) {
 	// Arrange.
 	routes := serveFolder(t, map[string]string{
@@ -113,7 +113,7 @@ func TestListRecipesReturnsEverySummaryAndProblem(t *testing.T) {
 	}
 	biscuits := catalog.Recipes[0]
 	gravy := catalog.Recipes[1]
-	if biscuits.Slug != "biscuits" || biscuits.Collection != "bakes" || biscuits.Makes != "9" {
+	if biscuits.Slug != "biscuits" || biscuits.Folder != "bakes" || biscuits.Makes != "9" {
 		t.Fatalf("got first recipe %+v", biscuits)
 	}
 	if gravy.Slug != "test-gravy" || gravy.Serves != "2" || strings.Join(gravy.Tags, ",") != "brunch,pork" {
@@ -138,12 +138,13 @@ func TestListRecipesSendsAnEmptyTagList(t *testing.T) {
 	}
 }
 
-// TestListRecipesSendsTheGames covers the games the home page gives shelves to, in the games file's order.
-func TestListRecipesSendsTheGames(t *testing.T) {
+// TestListRecipesSendsTheCollections covers the collections the home page gives shelves to, in the
+// collections file's order.
+func TestListRecipesSendsTheCollections(t *testing.T) {
 	// Arrange.
 	routes := serveFolder(t, map[string]string{
-		"_games.yaml":   "- tag: so2\n  label: SO2\n  name: Star Ocean 2\n- tag: so1\n  label: SO1\n  name: Star Ocean\n",
-		"biscuits.yaml": biscuitsCard,
+		"_collections.yaml": "- tag: so2\n  label: SO2\n  name: Star Ocean 2\n- tag: so1\n  label: SO1\n  name: Star Ocean\n",
+		"biscuits.yaml":     biscuitsCard,
 	})
 
 	// Act.
@@ -152,15 +153,15 @@ func TestListRecipesSendsTheGames(t *testing.T) {
 	// Assert.
 	catalog := Catalog{}
 	decode(t, response, &catalog)
-	expected := []cards.Game{{Tag: "so2", Label: "SO2", Name: "Star Ocean 2"}, {Tag: "so1", Label: "SO1", Name: "Star Ocean"}}
-	if len(catalog.Games) != 2 || catalog.Games[0] != expected[0] || catalog.Games[1] != expected[1] {
-		t.Fatalf("got games %+v, expected %+v", catalog.Games, expected)
+	expected := []cards.Collection{{Tag: "so2", Label: "SO2", Name: "Star Ocean 2"}, {Tag: "so1", Label: "SO1", Name: "Star Ocean"}}
+	if len(catalog.Collections) != 2 || catalog.Collections[0] != expected[0] || catalog.Collections[1] != expected[1] {
+		t.Fatalf("got collections %+v, expected %+v", catalog.Collections, expected)
 	}
 }
 
-// TestListRecipesSendsAnEmptyGameList covers a folder with no games file, whose games must arrive as []
-// and not null.
-func TestListRecipesSendsAnEmptyGameList(t *testing.T) {
+// TestListRecipesSendsAnEmptyCollectionList covers a folder with no collections file, whose collections
+// must arrive as [] and not null.
+func TestListRecipesSendsAnEmptyCollectionList(t *testing.T) {
 	// Arrange.
 	routes := serveFolder(t, map[string]string{"biscuits.yaml": biscuitsCard})
 
@@ -168,8 +169,8 @@ func TestListRecipesSendsAnEmptyGameList(t *testing.T) {
 	response := request(t, routes, "/api/recipes")
 
 	// Assert.
-	if strings.Contains(response.Body.String(), `"games":[]`) == false {
-		t.Fatalf("got %s, expected an empty game list", response.Body.String())
+	if strings.Contains(response.Body.String(), `"collections":[]`) == false {
+		t.Fatalf("got %s, expected an empty collection list", response.Body.String())
 	}
 }
 

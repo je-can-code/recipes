@@ -8,11 +8,11 @@ import (
 )
 
 // Load owes the site the whole recipes folder, read the same way every time: top-level cards and one
-// level of collections, nothing hidden or underscored, and every problem reported instead of swallowed.
+// level of folders, nothing hidden or underscored, and every problem reported instead of swallowed.
 // A card quietly missing from the site is the failure that matters most here, because nobody goes
 // looking for a recipe they don't know is gone.
 
-// TestLoadReadsATopLevelCard covers the plain case: a card at the top level, with no collection.
+// TestLoadReadsATopLevelCard covers the plain case: a card at the top level, in no folder.
 func TestLoadReadsATopLevelCard(t *testing.T) {
 	// Arrange.
 	files := map[string]string{"test-gravy.yaml": completeCard}
@@ -24,13 +24,13 @@ func TestLoadReadsATopLevelCard(t *testing.T) {
 	assertProblems(t, library, []Problem{})
 	assertStrings(t, slugsOf(library), []string{"test-gravy"})
 	recipe := library.Recipes[0]
-	if recipe.Collection != "" || recipe.File != "test-gravy.yaml" || recipe.Card.Title != "Test Gravy" {
-		t.Fatalf("got collection %q, file %q, title %q", recipe.Collection, recipe.File, recipe.Card.Title)
+	if recipe.Folder != "" || recipe.File != "test-gravy.yaml" || recipe.Card.Title != "Test Gravy" {
+		t.Fatalf("got folder %q, file %q, title %q", recipe.Folder, recipe.File, recipe.Card.Title)
 	}
 }
 
-// TestLoadNamesACollectionAfterItsFolder covers a card one folder down.
-func TestLoadNamesACollectionAfterItsFolder(t *testing.T) {
+// TestLoadKeepsACardsFolder covers a card one folder down, which remembers the folder it sits in.
+func TestLoadKeepsACardsFolder(t *testing.T) {
 	// Arrange.
 	files := map[string]string{"star-ocean/au-gratin-climax.yaml": cardTitled("Au Gratin Climax")}
 
@@ -40,8 +40,8 @@ func TestLoadNamesACollectionAfterItsFolder(t *testing.T) {
 	// Assert.
 	assertProblems(t, library, []Problem{})
 	recipe := library.Recipes[0]
-	if recipe.Collection != "star-ocean" || recipe.File != "star-ocean/au-gratin-climax.yaml" {
-		t.Fatalf("got collection %q, file %q", recipe.Collection, recipe.File)
+	if recipe.Folder != "star-ocean" || recipe.File != "star-ocean/au-gratin-climax.yaml" {
+		t.Fatalf("got folder %q, file %q", recipe.Folder, recipe.File)
 	}
 }
 
@@ -80,8 +80,8 @@ func TestLoadReportsAYmlFile(t *testing.T) {
 	})
 }
 
-// TestLoadReportsACardTooDeep covers a folder inside a collection, whose cards are never read, beside a
-// card at the right depth that still is.
+// TestLoadReportsACardTooDeep covers a folder inside a folder, whose cards are never read, beside a card
+// at the right depth that still is.
 func TestLoadReportsACardTooDeep(t *testing.T) {
 	// Arrange.
 	files := map[string]string{
@@ -96,17 +96,17 @@ func TestLoadReportsACardTooDeep(t *testing.T) {
 	assertStrings(t, slugsOf(library), []string{"lords-ozoni"})
 	assertProblems(t, library, []Problem{{
 		File:    "star-ocean/so2/au-gratin-climax.yaml",
-		Message: "Cards sit at the top level or one folder down, in a collection. Move this one up so it gets read.",
+		Message: "Cards sit at the top level or one folder down. Move this one up so it gets read.",
 	}})
 }
 
 // TestLoadKeepsTheFirstCardWithAName covers two cards sharing a file name: the top-level one wins, and
-// the collection one is reported, since a link could only ever reach one of them.
+// the one in a folder is reported, since a link could only ever reach one of them.
 func TestLoadKeepsTheFirstCardWithAName(t *testing.T) {
 	// Arrange.
 	files := map[string]string{
 		"gravy.yaml":        cardTitled("Top-Level Gravy"),
-		"brunch/gravy.yaml": cardTitled("Collection Gravy"),
+		"brunch/gravy.yaml": cardTitled("Folder Gravy"),
 	}
 
 	// Act.
@@ -239,9 +239,9 @@ func TestLoadBreaksATitleTieByName(t *testing.T) {
 	assertStrings(t, slugsOf(library), []string{"gravy-one", "gravy-two"})
 }
 
-// TestLoadReportsAnUnreadableCollection covers a collection folder the server isn't allowed into, beside
-// a top-level card that still loads.
-func TestLoadReportsAnUnreadableCollection(t *testing.T) {
+// TestLoadReportsAnUnreadableFolder covers a folder of cards the server isn't allowed into, beside a
+// top-level card that still loads.
+func TestLoadReportsAnUnreadableFolder(t *testing.T) {
 	// Arrange.
 	folder := writeFolder(t, map[string]string{
 		"test-gravy.yaml":      completeCard,
@@ -305,7 +305,7 @@ func TestLoadOnlyReportsCardsFromTooDeep(t *testing.T) {
 	// Assert.
 	assertProblems(t, library, []Problem{{
 		File:    "star-ocean/so2/au-gratin-climax.yaml",
-		Message: "Cards sit at the top level or one folder down, in a collection. Move this one up so it gets read.",
+		Message: "Cards sit at the top level or one folder down. Move this one up so it gets read.",
 	}})
 }
 

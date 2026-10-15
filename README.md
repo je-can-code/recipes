@@ -7,7 +7,7 @@ finish. No ads, no life stories, just the recipe.
 
 <p>
   <img src="docs/screenshots/home.png" width="270" alt="The home page: the rainbow Recipes wordmark, a search box, a row of shelf chips, and the recipes by course">
-  <img src="docs/screenshots/search.png" width="270" alt="Two game shelves lit up and a search for egg, showing the four recipes that match">
+  <img src="docs/screenshots/search.png" width="270" alt="Two collection shelves lit up and a search for egg, showing the four recipes that match">
 </p>
 
 Your recipes are plain text files, one per recipe, in a folder you choose. It comes with six to start from,
@@ -97,10 +97,15 @@ shows the same list in a red banner.
 
 The home page sorts recipes onto shelves, with a rainbow chip for each:
 
-- **Home Cooking** holds the cards at the top of the folder.
-- **A collection** is a folder inside it, so cards in `cocktails/` sit on a Cocktails shelf.
-- **A game** gets a shelf from an entry in `_games.yaml`. Its recipes carry the `game` tag and the game's
-  own tag, like `so2`, which is how the starter recipes land on the Star Ocean shelves.
+- **A collection** gets a shelf from an entry in `_collections.yaml` in the cards folder: a tag, a label
+  for its chip, and a full name. Every recipe carrying that tag is on its shelf, so a recipe can be in
+  several. Group them any way that suits you: by game, by cuisine, by season. The starter recipes come in
+  five collections, one per Star Ocean game, through their tags `so1` to `so5`.
+- **Home Cooking** holds every recipe that isn't in any collection, so a card never goes missing from the
+  home page.
+
+Cards can also sit in folders inside the cards folder, one level deep, just to keep things tidy. A folder
+doesn't make a shelf.
 
 Tap chips to combine shelves, and tap a lit chip again to put it out. With none lit, everything shows.
 Search narrows whatever is showing, and each chip shows how many of its recipes match.
@@ -193,13 +198,13 @@ build again and restart.
 ## How a page gets to the screen
 
 1. **The cards are YAML files on disk**, one per recipe. `_template.yaml` in the cards folder defines the
-   format, and `_games.yaml` beside it lists the games that get shelves.
+   format, and `_collections.yaml` beside it lists the collections that get shelves.
 2. **The Go server reads them** (`server/internal/cards`). It decodes each card strictly, checks it
    against the format's rules, renders its markdown to HTML, and points links between recipes at their
    pages. Anything wrong becomes a problem naming the file and saying what to fix, and every good card
    still loads.
 3. **It serves them as JSON** (`server/internal/api`). `GET /api/recipes` lists every recipe along with
-   the games and every problem, and `GET /api/recipes/{name}` returns one recipe, ready to show.
+   the collections and every problem, and `GET /api/recipes/{name}` returns one recipe, ready to show.
 4. **The website is a React app** (`web/`), built once into `server/internal/site/dist` and baked into
    the Go program. Any address that isn't a file or under `/api` gets the app's page, and the app decides
    what that address shows.
@@ -239,9 +244,10 @@ API just dims as usual.
 
 ## Shelves, search and the address
 
-The home page's shelves are Home Cooking (the top level, minus the games' dishes), each collection by name,
-then each game in `_games.yaml`'s order. `check` reports a mistake in the games file, and any top-level
-card tagged `game` whose game isn't listed, since that card would be on no shelf.
+The home page's shelves are Home Cooking, which holds every recipe in no collection, then each collection in
+`_collections.yaml`'s order, holding every recipe with its tag. `check` reports a mistake in the collections
+file. A folder only keeps cards tidy: cards are read at the top level and one folder down, and a folder
+makes no shelf.
 
 The list is split into courses, Breakfast through Drinks, each recipe once. A recipe tagged with two
 courses goes under the more particular kind of dish, so a ramen tagged dinner and soup is with the soups,
@@ -252,7 +258,7 @@ page as it was, scroll included.
 Search narrows whatever the lit chips show, as the typing goes, and each chip's number becomes its count of
 matches. During a search, every course with a match shows open. Once something is typed, the top of the
 page shrinks, so the results sit above a phone's keyboard. When the lit chips have nothing that matches, a
-link offers the same search over everything. Search looks at each recipe's title, tags and collection.
+link offers the same search over everything. Search looks at each recipe's title, tags and folder.
 Every word has to match, and words match partway through, so `beef dinner` finds recipes that are both,
 and `chori` already finds the chorizo.
 
@@ -358,14 +364,14 @@ carry a private key or anything from a `certs` folder.
 |---|---|
 | `server/cmd/recipes` | The program, with its commands: `serve` (the default), `check`, `certs` and `version` |
 | `server/cmd/release` | Builds the downloads for a release |
-| `server/internal/cards` | Reading, checking and rendering the cards, and reading the games file |
+| `server/internal/cards` | Reading, checking and rendering the cards, and reading the collections file |
 | `server/internal/api` | The JSON API, and routing everything else to the website |
 | `server/internal/site` | Serving the built website from inside the program |
 | `server/internal/config` | Reading `config.yaml` |
 | `server/internal/announce` | Getting Avahi to answer for the site's name on the Wi-Fi |
 | `server/internal/certs` | Making the certificate authority and the site's certificate |
 | `server/internal/trust` | The plain-http side: the trust page, the authority download, and the redirect to https |
-| `starter-recipes/` | The six cards, the template and the games file every download starts with |
+| `starter-recipes/` | The six cards, the template and the collections file every download starts with |
 | `config.example.yaml` | The settings every download starts with, and the place to start your own `config.yaml` |
 | `certs/` | This computer's certificates and the authority's private key, kept out of git |
 | `docs/writing-cards.md` | How a card should read, beyond what `_template.yaml` defines: the voice, the kitchen and tastes the cards are written for, and how to write a batch of them |

@@ -8,14 +8,15 @@ interface Problem
 }
 
 /**
- * What lists and search need to know about a recipe. Serves and makes are free text, and a card has
- * exactly one of the two; the other arrives empty.
+ * What lists and search need to know about a recipe. The folder is the one the card sits in, or empty at
+ * the top level. Serves and makes are free text, and a card has exactly one of the two; the other arrives
+ * empty.
  */
 interface RecipeSummary
 {
   slug: string;
   title: string;
-  collection: string;
+  folder: string;
   tags: string[];
   serves: string;
   makes: string;
@@ -23,10 +24,10 @@ interface RecipeSummary
 }
 
 /**
- * A game with a shelf of its own on the home page: the tag its recipes carry, the short label on the
+ * A collection with a shelf of its own on the home page: the tag its recipes carry, the short label on the
  * shelf's chip, and the full name over its list.
  */
-interface Game
+interface Collection
 {
   tag: string;
   label: string;
@@ -34,13 +35,13 @@ interface Game
 }
 
 /**
- * Every recipe, the games with shelves in the order the games file lists them, and every problem with the
- * cards, as the server read the recipes folder just now.
+ * Every recipe, the collections with shelves in the order the collections file lists them, and every
+ * problem with the cards, as the server read the recipes folder just now.
  */
 interface Catalog
 {
   recipes: RecipeSummary[];
-  games: Game[];
+  collections: Collection[];
   problems: Problem[];
 }
 
@@ -84,4 +85,4 @@ interface RecipeDetail extends RecipeSummary
   notes: RecipeEntry[];
 }
 
-export type { Catalog, Game, Problem, RecipeDetail, RecipeEntry, RecipeGroup, RecipeMethod, RecipeSummary };
+export type { Catalog, Collection, Problem, RecipeDetail, RecipeEntry, RecipeGroup, RecipeMethod, RecipeSummary };

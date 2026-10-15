@@ -1,0 +1,32 @@
+# The collections, each with a shelf of its own on the home page, in the order their chips appear after
+# Home Cooking. A collection gathers every recipe carrying its tag, so a recipe can be in several: the dishes
+# from one game, every cocktail, everything for the holidays, whatever grouping suits you.
+#
+# Each collection has three fields:
+#   tag    the tag its recipes carry, like so2.
+#   label  the short name on the shelf's chip, like SO2.
+#   name   the full name over the shelf's list.
+#
+# Home Cooking holds every recipe that isn't in any collection, so a card never goes missing from the home
+# page. A new collection is one more entry here, plus its tag on its cards. The site picks up a change here
+# on the next page load, and the check command (`recipes check`) reports any mistake in this file.
+
+- tag: so1
+  label: SO1
+  name: "Star Ocean: First Departure"
+
+- tag: so2
+  label: SO2
+  name: "Star Ocean: The Second Story"
+
+- tag: so3
+  label: SO3
+  name: "Star Ocean: Till the End of Time"
+
+- tag: so4
+  label: SO4
+  name: "Star Ocean: The Last Hope"
+
+- tag: so5
+  label: SO5
+  name: "Star Ocean: Integrity and Faithlessness"

@@ -2,7 +2,7 @@ import type { RecipeSummary } from '../types';
 
 /**
  * Finds the recipes matching what was typed. Every word has to turn up somewhere in a recipe's title,
- * tags or collection, ignoring capitals, so each extra word narrows the list: "beef dinner" means beef
+ * tags or folder, ignoring capitals, so each extra word narrows the list: "beef dinner" means beef
  * and dinner, not either. Words match partway through too, so results keep up while the typing does.
  * An empty search matches everything.
  * @param {RecipeSummary[]} recipes Every recipe, in the order they should be shown.
@@ -40,7 +40,7 @@ const toWords = (query: string): string[] =>
  */
 const searchableText = (recipe: RecipeSummary): string =>
 {
-  return [ recipe.title, recipe.collection, ...recipe.tags ]
+  return [ recipe.title, recipe.folder, ...recipe.tags ]
     .join(' ')
     .toLowerCase();
 };
