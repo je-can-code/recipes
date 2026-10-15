@@ -218,7 +218,7 @@
           </li>
           <li>
             Add the certificate:
-            <code>certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "{{.AuthorityName}}" -i ~/Downloads/recipes-ca.crt</code>
+            <code>certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "{{.AuthorityName}}" -i ~/Downloads/ca.crt</code>
           </li>
           <li>Quit the browser completely, then open it again.</li>
         </ol>
@@ -232,7 +232,7 @@
             Open <b>Settings</b>, <b>Security &amp; privacy</b>, <b>More security settings</b>,
             <b>Encryption &amp; credentials</b>, <b>Install a certificate</b>, then <b>CA certificate</b>.
           </li>
-          <li>Pick <b>recipes-ca.crt</b> from your downloads.</li>
+          <li>Pick <b>ca.crt</b> from your downloads.</li>
         </ol>
       </details>
 

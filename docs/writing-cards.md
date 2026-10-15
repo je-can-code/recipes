@@ -1,7 +1,7 @@
 # Writing recipe cards
 
-How a card in `/mnt/exdrive/docs/recipes` should read, for anyone writing one, person or agent. The format
-itself is defined by `_template.yaml` in that folder; this is everything the format can't say.
+How a recipe card should read, for anyone writing one, person or agent. The format itself is defined by
+`_template.yaml` in the cards folder; this is everything the format can't say.
 
 ## Before you start
 
@@ -19,7 +19,7 @@ itself is defined by `_template.yaml` in that folder; this is everything the for
   need it: `lead: "Too thick:"`.
 - Exactly one of `serves` or `makes`.
 - Link to another card by its slug, `[Salt Rice Ball](salt-rice-ball)`, and only to a card that exists.
-  `bun run check` fails on a link to nothing.
+  The check command fails on a link to nothing.
 
 ## Voice
 
@@ -49,7 +49,7 @@ itself is defined by `_template.yaml` in that folder; this is everything the for
   salad, side, sauce, dessert, baking, drink, breakfast, brunch, lunch, dinner, snack.
 - Give every card at least one course tag (breakfast, brunch, lunch, dinner, soup, salad, side, sauce,
   snack, baking, dessert or drink). A game's shelf lists its dishes under those headings.
-- A game's first cards need its entry in `_games.yaml` in the recipes folder, or `bun run check` reports
+- A game's first cards need its entry in `_games.yaml` in the cards folder, or the check command reports
   them as on no shelf. Leave that file to whoever runs the batch, since writers work side by side.
 
 ## The kitchen
@@ -83,7 +83,8 @@ itself is defined by `_template.yaml` in that folder; this is everything the for
 1. Read the template and the three example cards.
 2. Write each card with `Write`. Look up what you would otherwise guess (an unfamiliar dish, a fact for an
    intro, where an ingredient is sold in Seattle), and skip lookups for what you already know well.
-3. Run `bun run check` in `/mnt/exdrive/dev/recipes`. It reads every card the way the site does and lists
-   every problem. Fix problems in your own files only, since others may be writing cards at the same time.
+3. Run the check command: `bun run check` in this repository, or `recipes check` beside a downloaded
+   program. It reads every card the way the site does and lists every problem. Fix problems in your own
+   files only, since others may be writing cards at the same time.
 4. Never change an existing card, the template or the site's code. New cards show up on the site by
    themselves, so nothing needs deploying.
