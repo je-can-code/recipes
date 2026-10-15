@@ -28,6 +28,10 @@
   --rainbow-5: #4b4fc4;
   --rainbow-6: #9334c9;
 
+  /* text drawn on top of a rainbow color: dark on the bright ones, white on the deep ones. */
+  --ink-on-bright: #1d1f24;
+  --ink-on-deep: #ffffff;
+
   color-scheme: light dark;
 }
 
@@ -55,6 +59,10 @@
     --rainbow-4: #4aa8ff;
     --rainbow-5: #8c8fff;
     --rainbow-6: #c77dff;
+
+    /* every color in the dark rainbow is a light one, so dark text reads on all of them. */
+    --ink-on-bright: #16171d;
+    --ink-on-deep: #16171d;
   }
 }
 
@@ -177,7 +185,7 @@ a
   font-size: 1.05rem;
 }
 
-/* the home page: quiet up top like a search engine, every recipe underneath. */
+/* the home page: quiet up top like a search engine, the shelves underneath. */
 .home,
 .page
 {
@@ -204,7 +212,102 @@ a
   padding: 16vh 0 2.5rem;
 }
 
-.collection h2,
+/* the shelves: one chip per shelf, each its own color of the rainbow, and the shelf showing filled in. */
+.hue-0 { --hue: var(--rainbow-0); --hue-ink: var(--ink-on-deep); }
+.hue-1 { --hue: var(--rainbow-1); --hue-ink: var(--ink-on-bright); }
+.hue-2 { --hue: var(--rainbow-2); --hue-ink: var(--ink-on-bright); }
+.hue-3 { --hue: var(--rainbow-3); --hue-ink: var(--ink-on-bright); }
+.hue-4 { --hue: var(--rainbow-4); --hue-ink: var(--ink-on-deep); }
+.hue-5 { --hue: var(--rainbow-5); --hue-ink: var(--ink-on-deep); }
+.hue-6 { --hue: var(--rainbow-6); --hue-ink: var(--ink-on-deep); }
+
+.shelf-chips
+{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+  margin: 0 0 2.25rem;
+}
+
+.shelf-chip
+{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 0.45rem 0 1rem;
+  border: 2px solid var(--hue);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shelf-chip:hover
+{
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+/* the count rides in a little pill of the chip's own color. */
+.shelf-chip-count
+{
+  min-width: 2rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--hue);
+  color: var(--hue-ink);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* the shelf showing fills with its color and gives a little hop, and its count pill turns inside out. */
+.shelf-chip[aria-current="page"]
+{
+  background: var(--hue);
+  color: var(--hue-ink);
+  animation: chip-hop 0.35s ease-out;
+}
+
+.shelf-chip[aria-current="page"] .shelf-chip-count
+{
+  background: var(--background);
+  color: var(--text);
+}
+
+@keyframes chip-hop
+{
+  0% { transform: scale(0.92); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* the shelf's name over its list, marked with its chip's color. */
+.shelf-header
+{
+  padding-left: 0.85rem;
+  border-left: 5px solid var(--hue);
+}
+
+.shelf-header h2
+{
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1.25;
+}
+
+.shelf-count
+{
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.course h3,
 .recipe-collection
 {
   margin: 2rem 0 0.5rem;
@@ -983,6 +1086,7 @@ html:has(.quest)
 {
   .wordmark span,
   .search-box,
+  .shelf-chip,
   .ingredients li::before,
   .ingredients li::after,
   .steps li,
@@ -994,7 +1098,8 @@ html:has(.quest)
 
   .steps li.step-current .step-number,
   .quest-complete .quest-bar::after,
-  .timer-chip-ringing
+  .timer-chip-ringing,
+  .shelf-chip[aria-current="page"]
   {
     animation: none;
   }

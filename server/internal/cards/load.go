@@ -31,10 +31,12 @@ type Recipe struct {
 	Page Page
 }
 
-// Library is the recipes folder at one moment: every recipe that loaded, sorted by title, and every
-// problem found along the way. Both are always lists, never nil, so the site can show them as they are.
+// Library is the recipes folder at one moment: every recipe that loaded, sorted by title, the games with
+// shelves on the home page, in the games file's order, and every problem found along the way. All three
+// are always lists, never nil, so the site can show them as they are.
 type Library struct {
 	Recipes  []Recipe
+	Games    []Game
 	Problems []Problem
 }
 
@@ -108,7 +110,12 @@ func Load(folder string) (Library, error) {
 		return leftTitle < rightTitle
 	})
 
-	return Library{Recipes: recipes, Problems: problems}, nil
+	// read the games last, so a game's dish missing from every shelf can be reported.
+	games, gameProblems := loadGames(folder)
+	problems = append(problems, gameProblems...)
+	problems = append(problems, findShelfless(recipes, games)...)
+
+	return Library{Recipes: recipes, Games: games, Problems: problems}, nil
 }
 
 // findCardFiles lists the cards to read: the top level first, so a top-level card keeps its name over a

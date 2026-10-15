@@ -47,6 +47,10 @@ itself is defined by `_template.yaml` in that folder; this is everything the for
   `tags: [ chicken, dinner, game, star-ocean, so1 ]`. Every card from a game carries `game`. Reuse these
   food tags before inventing a new one: beef, pork, chicken, seafood, egg, vegetarian, rice, noodles, soup,
   salad, side, sauce, dessert, baking, drink, breakfast, brunch, lunch, dinner, snack.
+- Give every card at least one course tag (breakfast, brunch, lunch, dinner, soup, salad, side, sauce,
+  snack, baking, dessert or drink). A game's shelf lists its dishes under those headings.
+- A game's first cards need its entry in `_games.yaml` in the recipes folder, or `bun run check` reports
+  them as on no shelf. Leave that file to whoever runs the batch, since writers work side by side.
 
 ## The kitchen
 

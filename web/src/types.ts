@@ -23,11 +23,24 @@ interface RecipeSummary
 }
 
 /**
- * Every recipe and every problem with the cards, as the server read the recipes folder just now.
+ * A game with a shelf of its own on the home page: the tag its recipes carry, the short label on the
+ * shelf's chip, and the full name over its list.
+ */
+interface Game
+{
+  tag: string;
+  label: string;
+  name: string;
+}
+
+/**
+ * Every recipe, the games with shelves in the order the games file lists them, and every problem with the
+ * cards, as the server read the recipes folder just now.
  */
 interface Catalog
 {
   recipes: RecipeSummary[];
+  games: Game[];
   problems: Problem[];
 }
 
@@ -71,4 +84,4 @@ interface RecipeDetail extends RecipeSummary
   notes: RecipeEntry[];
 }
 
-export type { Catalog, Problem, RecipeDetail, RecipeEntry, RecipeGroup, RecipeMethod, RecipeSummary };
+export type { Catalog, Game, Problem, RecipeDetail, RecipeEntry, RecipeGroup, RecipeMethod, RecipeSummary };

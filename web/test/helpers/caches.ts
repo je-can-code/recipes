@@ -148,6 +148,7 @@ const catalogOf = (slugs: string[]): Catalog =>
     {
       return { slug, title: slug, collection: '', tags: [], serves: '', makes: '', time: '' };
     }),
+    games: [],
     problems: [],
   };
 };

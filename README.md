@@ -1,8 +1,8 @@
 # Recipes
 
-A small cookbook website for the recipe cards in `/mnt/exdrive/docs/recipes`: a search box, every recipe
-listed by collection, and one clean page per recipe, made to be read on a phone in the middle of cooking.
-No ads, no life stories, just the recipe.
+A small cookbook website for the recipe cards in `/mnt/exdrive/docs/recipes`: a search box, the recipes on
+shelves (Home Cooking, each collection, and each game), and one clean page per recipe, made to be read on a
+phone in the middle of cooking. No ads, no life stories, just the recipe.
 
 ## Running it
 
@@ -52,13 +52,13 @@ to this folder and the recipes folder, so update them if either lives somewhere 
 ## How a page gets to the screen
 
 1. **The cards are YAML files on disk**, one per recipe. `_template.yaml` in the recipes folder defines
-   the format.
+   the format, and `_games.yaml` beside it lists the games that get shelves.
 2. **The Go server reads them** (`server/internal/cards`). It decodes each card strictly, checks it
    against the format's rules, renders its markdown to HTML, and points links between recipes at their
    pages. Anything wrong becomes a problem naming the file and saying what to fix, and every good card
    still loads.
 3. **It serves them as JSON** (`server/internal/api`). `GET /api/recipes` lists every recipe along with
-   every problem, and `GET /api/recipes/{name}` returns one recipe, ready to show.
+   the games and every problem, and `GET /api/recipes/{name}` returns one recipe, ready to show.
 4. **The website is a React app** (`web/`), built once into `server/internal/site/dist` and baked into
    the Go binary. Any address that isn't a file or under `/api` gets the app's page, and the app decides
    what that address shows.
@@ -181,11 +181,25 @@ site moved to https still points at the old address, so replace it.
 | `certificates` | The folder `bun run certs` keeps the certificates in, read from the config file's folder when relative. Without it, the site runs on plain http alone. |
 | `listenSecure` | The address https listens on, `0.0.0.0:443` unless it says otherwise. |
 
-## Collections and search
+## Shelves and search
 
-A card at the top level of the recipes folder is listed under Home Cooking. A card one folder down
-belongs to a collection named after that folder, so `star-ocean/au-gratin-climax.yaml` is listed under
-Star Ocean. Cards any deeper aren't read, and `check` says so.
+The home page keeps the recipes on shelves, with a rainbow chip for each under the search box, counts
+included: Home Cooking first, then each collection, then each game.
+
+- **Home Cooking** is the cards at the top level of the recipes folder, minus the games' dishes. It's
+  where the home page opens.
+- **A collection** is a folder one level down, named after it, so `cocktails/mojito.yaml` is on the
+  Cocktails shelf. Cards any deeper aren't read, and `check` says so.
+- **A game** gets a shelf by having an entry in `_games.yaml` in the recipes folder: the tag its dishes
+  carry, the label on its chip, and its full name. Every dish from a game carries the `game` tag plus its
+  game's own (`so2`), and a dish from several games is on each of their shelves. The file sits beside the
+  cards, outside git, and is read live the same way. `check` reports a mistake in it, and any top-level card
+  tagged `game` whose game isn't listed, since that card would be on no shelf.
+
+A shelf lists its recipes under course headings, Breakfast through Drinks, each recipe once. A recipe
+tagged with two courses goes under the more particular kind of dish, so a ramen tagged dinner and soup is
+with the soups, and one with no course tag at all goes under Everything else. The address holds the shelf
+(`/?game=so2`, `/?collection=cocktails`), so the back button and a shared link land on it.
 
 Search looks at each recipe's title, tags and collection. Every word has to match, and words match
 partway through, so `beef dinner` finds recipes that are both, and `chori` already finds the chorizo.
@@ -195,7 +209,7 @@ partway through, so `beef dinner` finds recipes that are both, and `chori` alrea
 | Path | What it is |
 |---|---|
 | `server/cmd/recipes` | The program, with its three commands: `serve` (the default), `check` and `certs` |
-| `server/internal/cards` | Reading, checking and rendering the cards |
+| `server/internal/cards` | Reading, checking and rendering the cards, and reading the games file |
 | `server/internal/api` | The JSON API, and routing everything else to the website |
 | `server/internal/site` | Serving the built website from inside the binary |
 | `server/internal/config` | Reading `config.yaml` |
@@ -208,7 +222,7 @@ partway through, so `beef dinner` finds recipes that are both, and `chori` alrea
 | `scripts/app-icon.html` | The home-screen icon, which the PNGs in `web/public` are screenshots of |
 | `scripts/build-worker.ts` | Builds the service worker into the site as `sw.js`, after Vite has built the rest, with the build's name and file list written in |
 | `web/src/worker` | The service worker. `policy.ts` and `strategies.ts` decide what's saved and when the copy answers, as plain tested functions, and `sw.ts` connects them to the browser. `tsconfig.worker.json` checks it against a worker's globals rather than a page's |
-| `web/src/services` | Search, collection grouping, link handling, the API client, installing the service worker, and everything cooking runs on (progress, timers and finding times in a step, the tracker's words, confetti physics, the chime), as plain tested functions |
+| `web/src/services` | Search, shelves and courses, link handling, the API client, installing the service worker, and everything cooking runs on (progress, timers and finding times in a step, the tracker's words, confetti physics, the chime), as plain tested functions |
 | `web/src/hooks` | The glue between those services and the browser: loading a recipe, saving progress, ticking timers, the screen wake lock |
 | `web/src/pages`, `web/src/components` | The pages and their pieces, kept free of logic. `CookingRecipe` puts a recipe, its tracker and its confetti together |
 | `web/test` | The website's tests |

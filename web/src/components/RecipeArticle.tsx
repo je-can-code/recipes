@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { collectionLabel } from '../services/collections';
 import { withTimers } from '../services/durations';
 import { currentStep } from '../services/progress';
 import type { Progress } from '../services/progress';
+import { placeOf } from '../services/shelves';
 import type { RecipeDetail, RecipeEntry } from '../types';
 import { Icon } from './Icons';
 
@@ -35,11 +35,12 @@ const RecipeArticle = (props: RecipeArticleProps): React.JSX.Element =>
   const yieldText = recipe.serves === '' ? `Makes ${recipe.makes}` : `Serves ${recipe.serves}`;
   const timed = useMemo(() => withTimers(recipe), [ recipe ]);
   const current = currentStep(progress, recipe.method.steps.length);
+  const place = placeOf(recipe);
 
   return (
     <article className="recipe" onClick={(event) => startTimerFromTap(event, onStartTimer)}>
       <header className="recipe-header">
-        <p className="recipe-collection">{collectionLabel(recipe.collection)}</p>
+        {place !== '' && <p className="recipe-collection">{place}</p>}
         <h1>{recipe.title}</h1>
         <div className="rich recipe-intro" dangerouslySetInnerHTML={{ __html: recipe.intro }} />
         <p className="recipe-meta">

@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
-import { collectionLabel } from '../services/collections';
+import { placeOf } from '../services/shelves';
 import type { RecipeSummary } from '../types';
 
 /**
- * The recipes to list, and whether each row also names its collection, which search results need and
- * the home page, already grouped by collection, doesn't.
+ * The recipes to list, and whether each row also names where the recipe lives, which search results need
+ * and the home page, already sorted onto shelves, doesn't.
  */
 interface RecipeLinksProps
 {
@@ -14,7 +14,7 @@ interface RecipeLinksProps
 
 /**
  * A list of recipes, each a large tap target with its time and tags underneath.
- * @param {RecipeLinksProps} props The recipes, and whether to name their collections.
+ * @param {RecipeLinksProps} props The recipes, and whether to name where they live.
  * @returns {React.JSX.Element} The list.
  */
 const RecipeLinks = ({ recipes, showCollection }: RecipeLinksProps): React.JSX.Element =>
@@ -24,9 +24,10 @@ const RecipeLinks = ({ recipes, showCollection }: RecipeLinksProps): React.JSX.E
       {recipes.map((recipe) =>
       {
         const details = [ recipe.time, ...recipe.tags ];
-        if (showCollection)
+        const place = placeOf(recipe);
+        if (showCollection && place !== '')
         {
-          details.unshift(collectionLabel(recipe.collection));
+          details.unshift(place);
         }
 
         return (

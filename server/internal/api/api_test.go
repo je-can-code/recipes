@@ -138,6 +138,41 @@ func TestListRecipesSendsAnEmptyTagList(t *testing.T) {
 	}
 }
 
+// TestListRecipesSendsTheGames covers the games the home page gives shelves to, in the games file's order.
+func TestListRecipesSendsTheGames(t *testing.T) {
+	// Arrange.
+	routes := serveFolder(t, map[string]string{
+		"_games.yaml":   "- tag: so2\n  label: SO2\n  name: Star Ocean 2\n- tag: so1\n  label: SO1\n  name: Star Ocean\n",
+		"biscuits.yaml": biscuitsCard,
+	})
+
+	// Act.
+	response := request(t, routes, "/api/recipes")
+
+	// Assert.
+	catalog := Catalog{}
+	decode(t, response, &catalog)
+	expected := []cards.Game{{Tag: "so2", Label: "SO2", Name: "Star Ocean 2"}, {Tag: "so1", Label: "SO1", Name: "Star Ocean"}}
+	if len(catalog.Games) != 2 || catalog.Games[0] != expected[0] || catalog.Games[1] != expected[1] {
+		t.Fatalf("got games %+v, expected %+v", catalog.Games, expected)
+	}
+}
+
+// TestListRecipesSendsAnEmptyGameList covers a folder with no games file, whose games must arrive as []
+// and not null.
+func TestListRecipesSendsAnEmptyGameList(t *testing.T) {
+	// Arrange.
+	routes := serveFolder(t, map[string]string{"biscuits.yaml": biscuitsCard})
+
+	// Act.
+	response := request(t, routes, "/api/recipes")
+
+	// Assert.
+	if strings.Contains(response.Body.String(), `"games":[]`) == false {
+		t.Fatalf("got %s, expected an empty game list", response.Body.String())
+	}
+}
+
 // TestListRecipesExplainsAnUnreadableFolder covers a recipes folder that isn't there.
 func TestListRecipesExplainsAnUnreadableFolder(t *testing.T) {
 	// Arrange.

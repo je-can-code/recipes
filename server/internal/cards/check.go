@@ -39,13 +39,14 @@ func decodeCard(content []byte) (Card, []string) {
 		return card, []string{"The file is empty."}
 	}
 	if err != nil {
-		return card, describeDecodeError(err)
+		return card, describeDecodeError(err, "the card format")
 	}
 	return card, nil
 }
 
-// describeDecodeError turns the decoder's error into one message per complaint.
-func describeDecodeError(err error) []string {
+// describeDecodeError turns the decoder's error into one message per complaint. The shape names what the
+// file holds, like "the card format", for the complaint about a key it doesn't have.
+func describeDecodeError(err error, shape string) []string {
 	var typeError *yaml.TypeError
 	if errors.As(err, &typeError) == false {
 		// a syntax error stops the decoder where it happens, so there is only ever one to report.
@@ -55,20 +56,20 @@ func describeDecodeError(err error) []string {
 
 	messages := []string{}
 	for _, complaint := range typeError.Errors {
-		messages = append(messages, describeComplaint(complaint))
+		messages = append(messages, describeComplaint(complaint, shape))
 	}
 	return messages
 }
 
 // describeComplaint rewords one of the decoder's complaints, falling back to its own words for any
 // complaint without a better explanation.
-func describeComplaint(complaint string) string {
+func describeComplaint(complaint string, shape string) string {
 	if match := mappingWhereTextBelongs.FindStringSubmatch(complaint); match != nil {
 		return fmt.Sprintf("Line %s: expected text but found a key and a value. A colon followed by a space "+
 			"splits a line in two, so quote the line or move it into a >- block.", match[1])
 	}
 	if match := unknownKey.FindStringSubmatch(complaint); match != nil {
-		return fmt.Sprintf("Line %s: %q isn't part of the card format.", match[1], match[2])
+		return fmt.Sprintf("Line %s: %q isn't part of %s.", match[1], match[2], shape)
 	}
 	if match := textWhereListBelongs.FindStringSubmatch(complaint); match != nil {
 		return fmt.Sprintf("Line %s: expected a list, with each entry on its own line starting with \"- \".",

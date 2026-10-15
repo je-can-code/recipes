@@ -20,10 +20,11 @@ type Summary struct {
 	Time       string   `json:"time"`
 }
 
-// Catalog answers GET /api/recipes: every recipe, and every problem with the cards, so the site can
-// show a broken card instead of quietly leaving it out.
+// Catalog answers GET /api/recipes: every recipe, the games the home page gives shelves to, and every
+// problem with the cards, so the site can show a broken card instead of quietly leaving it out.
 type Catalog struct {
 	Recipes  []Summary       `json:"recipes"`
+	Games    []cards.Game    `json:"games"`
 	Problems []cards.Problem `json:"problems"`
 }
 
@@ -62,7 +63,7 @@ func listRecipes(shelf *cards.Shelf) http.Handler {
 			return
 		}
 
-		catalog := Catalog{Recipes: []Summary{}, Problems: library.Problems}
+		catalog := Catalog{Recipes: []Summary{}, Games: library.Games, Problems: library.Problems}
 		for _, recipe := range library.Recipes {
 			catalog.Recipes = append(catalog.Recipes, summarize(recipe))
 		}
