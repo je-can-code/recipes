@@ -337,9 +337,9 @@ keeps its own checkmarks and timers, apart from the browser's.
 
 Two GitHub Actions workflows live in `.github/workflows`:
 
-- **`tests.yml`** runs on every push to `main` and every pull request: the typecheck, both test suites, then
+- **`tests.yaml`** runs on every push to `main` and every pull request: the typecheck, both test suites, then
   the Linux download, unzipped and checked the way someone who downloads it would run it.
-- **`release.yml`** runs when a version tag is pushed. It runs the tests first, then builds the three
+- **`release.yaml`** runs when a version tag is pushed. It runs the tests first, then builds the three
   downloads and attaches them to a new release named after the tag, with notes listing what changed.
 
 ```bash
