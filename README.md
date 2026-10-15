@@ -6,8 +6,14 @@ check off ingredients and steps, tap any time in a step to start a timer, and ge
 finish. No ads, no life stories, just the recipe.
 
 <p>
-  <img src="docs/screenshots/home.png" width="270" alt="The home page: the rainbow Recipes wordmark, a search box, a row of shelf chips, and the recipes by course">
-  <img src="docs/screenshots/search.png" width="270" alt="Two collection shelves lit up and a search for egg, showing the four recipes that match">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/home-dark.png">
+    <img src="docs/screenshots/home-light.png" width="270" alt="The home page: the rainbow Recipes wordmark, a search box, a row of shelf chips, and the recipes by course">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/search-dark.png">
+    <img src="docs/screenshots/search-light.png" width="270" alt="Two collection shelves lit up and a search for egg, showing the four recipes that match">
+  </picture>
 </p>
 
 Your recipes are plain text files, one per recipe, in a folder you choose. It comes with six to start from,
