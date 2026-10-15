@@ -1,0 +1,28 @@
+# Recipes, always on: it starts with the computer, runs as you, and needs nobody logged in.
+#
+# This assumes the program sits at ~/recipes/recipes, with its config.yaml beside it, as it does when the
+# download is unzipped into a folder named recipes in your home folder. Change the path below if yours is
+# elsewhere. Then:
+#
+#   cp recipes.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now recipes
+#   loginctl enable-linger "$USER"
+#
+# The last line starts it at boot, before anyone logs in. Install it by copying, not linking: if the folder
+# holding this file mounted late at boot, a link would leave the service quietly never starting.
+#
+# It never stops retrying. If its folder is late to mount, or its port isn't free yet, it tries again every
+# five seconds until it can listen, rather than giving up after a few attempts.
+
+[Unit]
+Description=Recipes website
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart=%h/recipes/recipes
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

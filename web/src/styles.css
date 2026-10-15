@@ -1,0 +1,1299 @@
+/*
+ * The whole site's look. Built for a phone first, since that's where a recipe gets read mid-cook:
+ * big text, big tap targets, and nothing on screen that isn't the recipe.
+ */
+
+/* colors as tokens: light by default, dark whenever the device is. */
+:root
+{
+  --background: #ffffff;
+  --surface: #f3f4f7;
+  --text: #1d1f24;
+  --muted: #5f6673;
+  --border: #e1e4ea;
+  --border-strong: #b9bfca;
+  --accent: #1e6fd0;
+  --accent-ink: #ffffff;
+  --shadow: 0 1px 6px rgba(32, 33, 36, 0.2);
+  --danger-background: #fdecec;
+  --danger-border: #f3b6b6;
+  --danger-text: #8a1c1c;
+
+  /* the wordmark's seven letters, and the step numbers that cycle through them. */
+  --rainbow-0: #e5393a;
+  --rainbow-1: #f57c00;
+  --rainbow-2: #f2b200;
+  --rainbow-3: #2e9e48;
+  --rainbow-4: #1e7fe0;
+  --rainbow-5: #4b4fc4;
+  --rainbow-6: #9334c9;
+
+  /* text drawn on top of a rainbow color: dark on the bright ones, white on the deep ones. */
+  --ink-on-bright: #1d1f24;
+  --ink-on-deep: #ffffff;
+
+  /* the rainbow twice over, red to red and again, so sliding it half its width along loops without a seam. */
+  --rainbow-loop: linear-gradient(90deg, var(--rainbow-0), var(--rainbow-1), var(--rainbow-2), var(--rainbow-3),
+    var(--rainbow-4), var(--rainbow-5), var(--rainbow-6), var(--rainbow-0), var(--rainbow-1), var(--rainbow-2),
+    var(--rainbow-3), var(--rainbow-4), var(--rainbow-5), var(--rainbow-6), var(--rainbow-0));
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark)
+{
+  :root
+  {
+    --background: #16171d;
+    --surface: #22242d;
+    --text: #e8e9ee;
+    --muted: #a0a7b4;
+    --border: #2f323c;
+    --border-strong: #4c5260;
+    --accent: #74b6ff;
+    --accent-ink: #0b1d33;
+    --shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+    --danger-background: #3a1b1e;
+    --danger-border: #6b2a2f;
+    --danger-text: #ffb8b8;
+
+    --rainbow-0: #ff6b6b;
+    --rainbow-1: #ffa040;
+    --rainbow-2: #ffd23f;
+    --rainbow-3: #4cd07a;
+    --rainbow-4: #4aa8ff;
+    --rainbow-5: #8c8fff;
+    --rainbow-6: #c77dff;
+
+    /* every color in the dark rainbow is a light one, so dark text reads on all of them. */
+    --ink-on-bright: #16171d;
+    --ink-on-deep: #16171d;
+  }
+}
+
+*,
+*::before,
+*::after
+{
+  box-sizing: border-box;
+}
+
+html
+{
+  -webkit-text-size-adjust: 100%;
+}
+
+body
+{
+  margin: 0;
+  background: var(--background);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+a
+{
+  color: var(--accent);
+}
+
+:focus-visible
+{
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* the wordmark: one rainbow color per letter, and a little wave on hover. */
+.wordmark
+{
+  display: inline-flex;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-decoration: none;
+  transition: font-size 0.35s ease;
+}
+
+.wordmark span
+{
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+
+.wordmark:hover span
+{
+  transform: translateY(-0.08em);
+}
+
+.wordmark-large
+{
+  font-size: clamp(3.5rem, 17vw, 6rem);
+}
+
+.wordmark-small
+{
+  font-size: 1.65rem;
+}
+
+.rainbow-0 { color: var(--rainbow-0); }
+.rainbow-1 { color: var(--rainbow-1); transition-delay: 30ms; }
+.rainbow-2 { color: var(--rainbow-2); transition-delay: 60ms; }
+.rainbow-3 { color: var(--rainbow-3); transition-delay: 90ms; }
+.rainbow-4 { color: var(--rainbow-4); transition-delay: 120ms; }
+.rainbow-5 { color: var(--rainbow-5); transition-delay: 150ms; }
+.rainbow-6 { color: var(--rainbow-6); transition-delay: 180ms; }
+
+/* the search box: a pill with a rainbow rim, which flows round and glows while the box is in use. The rim
+   is two backgrounds, the page's color over the inside and the looping rainbow under the border. */
+.search-box
+{
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 36rem;
+  padding: 0 0.4rem 0 1.1rem;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background:
+    linear-gradient(var(--background), var(--background)) padding-box,
+    var(--rainbow-loop) border-box;
+  background-size: 100% 100%, 200% 100%;
+  background-position: 0 0, 0 0;
+}
+
+/* the glow: the same rainbow, blurred, behind the box, showing while it's in use. */
+.search-box::before
+{
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  bottom: -2px;
+  left: -2px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--rainbow-loop);
+  background-size: 200% 100%;
+  filter: blur(14px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.search-box:focus-within
+{
+  animation: rim-flow 2.5s linear infinite;
+}
+
+.search-box:focus-within::before
+{
+  opacity: 0.55;
+  animation: glow-flow 2.5s linear infinite;
+}
+
+@media (hover: hover)
+{
+  .search-box:hover::before
+  {
+    opacity: 0.3;
+  }
+}
+
+@keyframes rim-flow
+{
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 0 0, 100% 0; }
+}
+
+@keyframes glow-flow
+{
+  from { background-position: 0 0; }
+  to { background-position: 100% 0; }
+}
+
+.search-icon
+{
+  flex: none;
+  width: 1.2rem;
+  height: 1.2rem;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  transition: stroke 0.3s ease;
+}
+
+.search-box:focus-within .search-icon
+{
+  stroke: var(--rainbow-4);
+}
+
+/* at 16px or more, phones don't zoom the page when the box takes focus. */
+.search-box input
+{
+  flex: 1;
+  min-width: 0;
+  height: 3rem;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  caret-color: var(--rainbow-4);
+  font: inherit;
+  font-size: 1.05rem;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* the box draws its own clear button, so the browser's is put away. */
+.search-box input::-webkit-search-cancel-button,
+.search-box input::-webkit-search-decoration
+{
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search-clear
+{
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.search-clear:hover
+{
+  color: var(--text);
+}
+
+/* the home page: quiet up top like a search engine, the shelves underneath. */
+.home,
+.page
+{
+  margin: 0 auto;
+  padding: 0 max(1rem, env(safe-area-inset-right)) 4rem max(1rem, env(safe-area-inset-left));
+}
+
+.home
+{
+  max-width: 40rem;
+}
+
+.page
+{
+  max-width: 44rem;
+}
+
+.home-hero
+{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 16vh 0 2.5rem;
+  transition: padding 0.35s ease, gap 0.35s ease;
+}
+
+/* once something is typed, the top shrinks, so the results sit above a phone's keyboard. */
+.home-searching .home-hero
+{
+  gap: 0.85rem;
+  padding: 1.25rem 0 1.5rem;
+}
+
+/* the shelves: one chip per shelf, each its own color of the rainbow, and the shelf showing filled in. */
+.hue-0 { --hue: var(--rainbow-0); --hue-ink: var(--ink-on-deep); }
+.hue-1 { --hue: var(--rainbow-1); --hue-ink: var(--ink-on-bright); }
+.hue-2 { --hue: var(--rainbow-2); --hue-ink: var(--ink-on-bright); }
+.hue-3 { --hue: var(--rainbow-3); --hue-ink: var(--ink-on-bright); }
+.hue-4 { --hue: var(--rainbow-4); --hue-ink: var(--ink-on-deep); }
+.hue-5 { --hue: var(--rainbow-5); --hue-ink: var(--ink-on-deep); }
+.hue-6 { --hue: var(--rainbow-6); --hue-ink: var(--ink-on-deep); }
+
+.shelf-chips
+{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+  margin: 0 0 2.25rem;
+}
+
+.shelf-chip
+{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 0.45rem 0 1rem;
+  border: 2px solid var(--hue);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* only a real pointer lifts a chip, since a touch screen would leave the last chip tapped hovering. */
+@media (hover: hover)
+{
+  .shelf-chip:hover
+  {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+}
+
+.shelf-chip .icon
+{
+  width: 0.95em;
+  height: 0.95em;
+  margin-right: 0.15rem;
+  stroke-width: 3;
+}
+
+/* the count rides in a little pill of the chip's own color. */
+.shelf-chip-count
+{
+  min-width: 2rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--hue);
+  color: var(--hue-ink);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* a lit chip fills with its color and gives a little hop, and its count pill turns inside out. */
+.shelf-chip[aria-pressed="true"]
+{
+  background: var(--hue);
+  color: var(--hue-ink);
+  animation: chip-hop 0.35s ease-out;
+}
+
+.shelf-chip[aria-pressed="true"] .shelf-chip-count
+{
+  background: var(--background);
+  color: var(--text);
+}
+
+@keyframes chip-hop
+{
+  0% { transform: scale(0.92); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* the list's name, beside a bar in the lit chips' colors, or the whole rainbow when everything shows. */
+.shelf-header
+{
+  display: flex;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.shelf-bar
+{
+  flex: none;
+  width: 5px;
+  border-radius: 3px;
+}
+
+.shelf-header h2
+{
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1.25;
+}
+
+.shelf-count
+{
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.shelf-widen
+{
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-weight: 600;
+}
+
+/* the courses: a row each, with its count in its own rainbow color. Normally each row opens and closes
+   the recipes under it; during a search, every row stays open. */
+.course-heading
+{
+  margin: 0;
+  font: inherit;
+}
+
+.course-row
+{
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0 0.25rem;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.course-toggle
+{
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.course-count
+{
+  min-width: 1.9rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--hue);
+  color: var(--hue-ink);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.course-toggle .icon
+{
+  margin-left: auto;
+  color: var(--muted);
+  transition: transform 0.25s ease;
+}
+
+.course-toggle[aria-expanded="true"] .icon
+{
+  transform: rotate(90deg);
+}
+
+/* a closed course folds its recipes away to nothing, sliding open and shut where the browser can animate
+   it and simply appearing where it can't. */
+.course-body
+{
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+
+.course-body-open
+{
+  grid-template-rows: 1fr;
+}
+
+.course-body-inner
+{
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* the course's row already draws the line a list would start with. */
+.course .recipe-links
+{
+  border-top: none;
+}
+
+/* a list of recipes: every row a big tap target. */
+.recipe-links
+{
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+  list-style: none;
+}
+
+.recipe-links li
+{
+  border-bottom: 1px solid var(--border);
+}
+
+.recipe-links a
+{
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 0.25rem;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.recipe-link-title
+{
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.recipe-links a:hover .recipe-link-title
+{
+  color: var(--accent);
+}
+
+.recipe-link-details
+{
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* the header on every page but home: the small wordmark. */
+.page-header
+{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 1rem 0;
+}
+
+.status
+{
+  margin: 2rem 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.status-error
+{
+  color: var(--danger-text);
+}
+
+.missing
+{
+  text-align: center;
+}
+
+/* broken cards: loud on purpose, so they get fixed instead of forgotten. */
+.problems
+{
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--danger-border);
+  border-radius: 0.75rem;
+  background: var(--danger-background);
+  color: var(--danger-text);
+  font-size: 0.95rem;
+}
+
+.problems ul
+{
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.problems code
+{
+  font-weight: 700;
+}
+
+/* a recipe. */
+.recipe-header
+{
+  padding: 0.75rem 0 0.25rem;
+}
+
+.recipe h1
+{
+  margin: 0.2rem 0 0.75rem;
+  font-size: clamp(1.9rem, 7.5vw, 2.6rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+.recipe-intro
+{
+  font-size: 1.05rem;
+}
+
+.recipe-meta
+{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.recipe-meta span
+{
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tags
+{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tags a
+{
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.tags a::before
+{
+  content: "#";
+  opacity: 0.55;
+}
+
+.tags a:hover
+{
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.recipe section
+{
+  margin-top: 2.25rem;
+}
+
+.recipe h2
+{
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--border);
+  font-size: 1.35rem;
+}
+
+.recipe h3
+{
+  margin: 1.25rem 0 0.4rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.notes
+{
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.notes li
+{
+  margin: 0.7rem 0;
+}
+
+/*
+ * ingredients: a tap checks one off. A checked ingredient turns bold rather than crossed out, since it's
+ * on the counter now and still has to be read while the steps call for it.
+ */
+.ingredients
+{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ingredients li
+{
+  position: relative;
+  padding: 0.45rem 0 0.45rem 2.1rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* the circle to tick. */
+.ingredients li::before
+{
+  position: absolute;
+  top: 0.62rem;
+  left: 0.15rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  content: "";
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* the tick inside it, drawn as two sides of a box turned on its corner. */
+.ingredients li::after
+{
+  position: absolute;
+  top: 0.86rem;
+  left: 0.62rem;
+  width: 0.32rem;
+  height: 0.62rem;
+  border: solid var(--check-ink);
+  border-width: 0 2.5px 2.5px 0;
+  content: "";
+  opacity: 0;
+  transform: rotate(45deg) scale(0.4);
+  transition: opacity 0.15s ease, transform 0.2s ease;
+}
+
+.ingredients li.ingredient-checked
+{
+  font-weight: 700;
+}
+
+.ingredients li.ingredient-checked::before
+{
+  border-color: var(--check-color);
+  background: var(--check-color);
+}
+
+.ingredients li.ingredient-checked::after
+{
+  opacity: 1;
+  transform: rotate(45deg) scale(1);
+}
+
+/* ticked circles go round the rainbow too, a little behind the step numbers. */
+.ingredients li { --check-color: var(--rainbow-4); --check-ink: #ffffff; }
+.ingredients li:nth-child(7n + 1) { --check-color: var(--rainbow-0); }
+.ingredients li:nth-child(7n + 2) { --check-color: var(--rainbow-1); }
+.ingredients li:nth-child(7n + 3) { --check-color: var(--rainbow-2); --check-ink: #3a2a00; }
+.ingredients li:nth-child(7n + 4) { --check-color: var(--rainbow-3); }
+.ingredients li:nth-child(7n + 5) { --check-color: var(--rainbow-4); }
+.ingredients li:nth-child(7n + 6) { --check-color: var(--rainbow-5); }
+.ingredients li:nth-child(7n + 7) { --check-color: var(--rainbow-6); }
+
+/*
+ * steps: big numbers in rainbow order, so a glance back at the counter finds the right one. A tap marks a
+ * step done, and the next one waits in a highlighted card with its number glowing. Every step has the
+ * card's padding and border, transparent until it's next, so nothing shifts as the highlight moves.
+ */
+.steps
+{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps li
+{
+  --step-color: var(--rainbow-4);
+  --step-ink: #ffffff;
+  position: relative;
+  margin: 0 -0.75rem 0.5rem;
+  padding: 0.7rem 0.75rem 0.7rem 3.4rem;
+  border: 2px solid transparent;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.steps li:nth-child(7n + 1) { --step-color: var(--rainbow-0); }
+.steps li:nth-child(7n + 2) { --step-color: var(--rainbow-1); }
+.steps li:nth-child(7n + 3) { --step-color: var(--rainbow-2); --step-ink: #3a2a00; }
+.steps li:nth-child(7n + 4) { --step-color: var(--rainbow-3); }
+.steps li:nth-child(7n + 5) { --step-color: var(--rainbow-4); }
+.steps li:nth-child(7n + 6) { --step-color: var(--rainbow-5); }
+.steps li:nth-child(7n + 7) { --step-color: var(--rainbow-6); }
+
+.step-number
+{
+  position: absolute;
+  top: 0.65rem;
+  left: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.95rem;
+  height: 1.95rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--step-color);
+  color: var(--step-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  touch-action: manipulation;
+}
+
+.step-number .icon
+{
+  width: 1.15rem;
+  height: 1.15rem;
+  stroke-width: 3;
+}
+
+.steps li.step-current
+{
+  border-color: var(--step-color);
+  border-color: color-mix(in srgb, var(--step-color) 55%, transparent);
+  background: var(--surface);
+}
+
+.steps li.step-current .step-number
+{
+  animation: step-glow 1.8s ease-in-out infinite;
+}
+
+/* a done step fades back, keeping its number's color as a tick. */
+.steps li.step-done > :not(.step-number)
+{
+  opacity: 0.45;
+  transition: opacity 0.25s ease;
+}
+
+@keyframes step-glow
+{
+  0%
+  {
+    box-shadow: 0 0 0 0 var(--step-color);
+  }
+
+  70%,
+  100%
+  {
+    box-shadow: 0 0 0 0.55rem transparent;
+  }
+}
+
+/* a time in the method: tap it to start a timer. */
+.timer
+{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 0 0.05rem;
+  padding: 0 0.5rem 0 0.4rem;
+  border: 1.5px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.4;
+  touch-action: manipulation;
+}
+
+.timer::before
+{
+  width: 0.95em;
+  height: 0.95em;
+  background: currentColor;
+  content: "";
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M12 7v5l3 2'/%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M12 7v5l3 2'/%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.timer:active
+{
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* line icons take the color and size of the text they sit in. */
+.icon
+{
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* the recipe page leaves room at the bottom for the quest tracker, and scrolls nothing in behind it. */
+.page-recipe
+{
+  padding-bottom: 11rem;
+}
+
+html:has(.quest)
+{
+  scroll-padding-bottom: 8rem;
+}
+
+/* the quest tracker: pinned to the bottom of the screen, where a thumb can reach it. */
+.quest
+{
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  border-top: 1px solid var(--border);
+  background: var(--background);
+  background: color-mix(in srgb, var(--background) 86%, transparent);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.12);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+
+.quest-inner
+{
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 0.65rem max(1rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+}
+
+.quest-row
+{
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.quest-objective
+{
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.quest-objective:disabled
+{
+  cursor: default;
+}
+
+.quest-label
+{
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.quest-awake
+{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--rainbow-1);
+  white-space: nowrap;
+}
+
+.quest-awake::before
+{
+  margin: 0 0.15rem 0 0.35rem;
+  color: var(--muted);
+  content: "\00B7";
+}
+
+.quest-detail
+{
+  overflow: hidden;
+  font-size: 1.02rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quest-restart
+{
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  touch-action: manipulation;
+}
+
+.quest-restart-armed
+{
+  border-color: var(--danger-border);
+  background: var(--danger-background);
+  color: var(--danger-text);
+}
+
+/* the bar: the whole rainbow lies underneath, and a cover slides back off it as steps get done. */
+.quest-bar
+{
+  position: relative;
+  height: 0.6rem;
+  margin-top: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--rainbow-0), var(--rainbow-1), var(--rainbow-2), var(--rainbow-3), var(--rainbow-4), var(--rainbow-5), var(--rainbow-6));
+}
+
+.quest-unfilled
+{
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--surface);
+  transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* finished: the label turns rainbow, and a shine sweeps across the full bar. */
+.quest-complete .quest-label
+{
+  background: linear-gradient(90deg, var(--rainbow-0), var(--rainbow-1), var(--rainbow-2), var(--rainbow-3), var(--rainbow-4), var(--rainbow-5), var(--rainbow-6));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.quest-complete .quest-bar::after
+{
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.7) 50%, transparent 80%);
+  content: "";
+  transform: translateX(-100%);
+  animation: quest-shine 2.4s ease-in-out infinite;
+}
+
+@keyframes quest-shine
+{
+  to
+  {
+    transform: translateX(100%);
+  }
+}
+
+/* running timers ride along above the objective, scrolling sideways when there are a lot of them. */
+.quest-timers
+{
+  display: flex;
+  gap: 0.45rem;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+.quest-timers::-webkit-scrollbar
+{
+  display: none;
+}
+
+.timer-chip
+{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 13rem;
+  padding: 0.4rem 0.65rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+.timer-chip-clock
+{
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.timer-chip-name
+{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.85;
+}
+
+.timer-chip-armed
+{
+  background: var(--danger-text);
+  color: var(--background);
+}
+
+.timer-chip-ringing
+{
+  background: var(--rainbow-0);
+  color: #ffffff;
+  animation: timer-ring 0.9s ease-in-out infinite;
+}
+
+@keyframes timer-ring
+{
+  50%
+  {
+    transform: scale(1.07);
+  }
+}
+
+/* confetti flies over everything, and never gets in the way of a tap. */
+.confetti
+{
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* on a tablet, the ingredients get a column of their own that stays put while the steps scroll past. */
+@media (min-width: 720px)
+{
+  .page-recipe
+  {
+    max-width: 70rem;
+  }
+
+  .page-recipe .recipe-header
+  {
+    max-width: 46rem;
+  }
+
+  .recipe-body
+  {
+    display: grid;
+    grid-template-columns: minmax(15rem, 2fr) 3fr;
+    column-gap: 3rem;
+    align-items: start;
+  }
+
+  .recipe-ingredients
+  {
+    position: sticky;
+    top: 0;
+    max-height: calc(100vh - 8rem);
+    max-height: calc(100dvh - 8rem);
+    padding: 0 0.25rem 1rem 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .quest-inner
+  {
+    max-width: 70rem;
+  }
+}
+
+/* markdown from the cards: paragraphs, and tables that scroll sideways on a narrow screen. */
+.rich
+{
+  overflow-x: auto;
+}
+
+.rich p
+{
+  margin: 0.5rem 0;
+}
+
+/* tight enough that a five-column table like the steak's doneness chart fits a phone without scrolling. */
+.rich table
+{
+  min-width: 100%;
+  margin: 1rem 0;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.rich th,
+.rich td
+{
+  padding: 0.5rem 0.35rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.rich th
+{
+  color: var(--muted);
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+  .wordmark,
+  .wordmark span,
+  .home-hero,
+  .search-box::before,
+  .search-icon,
+  .shelf-chip,
+  .course-toggle .icon,
+  .course-body,
+  .ingredients li::before,
+  .ingredients li::after,
+  .steps li,
+  .steps li.step-done > :not(.step-number),
+  .quest-unfilled
+  {
+    transition: none;
+  }
+
+  .search-box:focus-within,
+  .search-box:focus-within::before,
+  .steps li.step-current .step-number,
+  .quest-complete .quest-bar::after,
+  .timer-chip-ringing,
+  .shelf-chip[aria-pressed="true"]
+  {
+    animation: none;
+  }
+}

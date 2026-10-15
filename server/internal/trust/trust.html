@@ -1,0 +1,258 @@
+<!doctype html>
+<!--
+  The page a new device opens first, over plain http, to trust the site's certificate authority. Everything
+  is inline on purpose: anything it linked to would be sent to https, which the device can't open yet.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Trust the recipes</title>
+    <style>
+      :root
+      {
+        --background: #ffffff;
+        --surface: #f3f4f7;
+        --text: #1d1f24;
+        --muted: #5f6673;
+        --border: #e1e4ea;
+        --accent: #1e6fd0;
+        --rainbow-0: #e5393a;
+        --rainbow-1: #f57c00;
+        --rainbow-2: #f2b200;
+        --rainbow-3: #2e9e48;
+        --rainbow-4: #1e7fe0;
+        --rainbow-5: #4b4fc4;
+        --rainbow-6: #9334c9;
+      }
+
+      @media (prefers-color-scheme: dark)
+      {
+        :root
+        {
+          --background: #16171d;
+          --surface: #22242d;
+          --text: #e8e9ee;
+          --muted: #a0a7b4;
+          --border: #2f323c;
+          --accent: #74b6ff;
+          --rainbow-0: #ff6b6b;
+          --rainbow-1: #ffa040;
+          --rainbow-2: #ffd23f;
+          --rainbow-3: #4cd07a;
+          --rainbow-4: #4aa8ff;
+          --rainbow-5: #8c8fff;
+          --rainbow-6: #c77dff;
+        }
+      }
+
+      body
+      {
+        margin: 0;
+        background: var(--background);
+        color: var(--text);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      main
+      {
+        max-width: 36rem;
+        margin: 0 auto;
+        padding: 1.5rem max(1rem, env(safe-area-inset-right)) 4rem max(1rem, env(safe-area-inset-left));
+      }
+
+      a
+      {
+        color: var(--accent);
+      }
+
+      .wordmark
+      {
+        margin: 0;
+        font-size: 1.65rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      h1
+      {
+        margin: 1.25rem 0 0.5rem;
+        font-size: 1.8rem;
+        line-height: 1.2;
+      }
+
+      .download
+      {
+        display: block;
+        margin: 1.5rem 0;
+        padding: 0.95rem 1rem;
+        border: 3px solid transparent;
+        border-radius: 999px;
+        background:
+          linear-gradient(var(--background), var(--background)) padding-box,
+          linear-gradient(90deg, var(--rainbow-0), var(--rainbow-1), var(--rainbow-2), var(--rainbow-3), var(--rainbow-4), var(--rainbow-5), var(--rainbow-6)) border-box;
+        color: var(--text);
+        font-size: 1.1rem;
+        font-weight: 800;
+        text-align: center;
+        text-decoration: none;
+      }
+
+      details
+      {
+        margin: 0.75rem 0;
+        padding: 0.7rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        background: var(--surface);
+      }
+
+      summary
+      {
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      ol
+      {
+        margin: 0.5rem 0 0.25rem;
+        padding-left: 1.3rem;
+      }
+
+      li
+      {
+        margin: 0.45rem 0;
+      }
+
+      .name
+      {
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .finish
+      {
+        margin-top: 1.5rem;
+        color: var(--muted);
+      }
+
+      /* commands wrap anywhere, so a long one never pushes the page sideways on a phone. */
+      code
+      {
+        display: block;
+        margin: 0.4rem 0;
+        padding: 0.5rem 0.65rem;
+        border-radius: 0.5rem;
+        background: var(--background);
+        font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 0.85rem;
+        overflow-wrap: anywhere;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="wordmark">
+        <span style="color: var(--rainbow-0)">R</span><span style="color: var(--rainbow-1)">e</span><span style="color: var(--rainbow-2)">c</span><span style="color: var(--rainbow-3)">i</span><span style="color: var(--rainbow-4)">p</span><span style="color: var(--rainbow-5)">e</span><span style="color: var(--rainbow-6)">s</span>
+      </p>
+      <h1>Trust the recipes on this device</h1>
+      <p>
+        The recipes run on https, which keeps the screen on while you cook and lets timers ring on time.
+        Each device just needs to trust the site's certificate once. It takes about a minute.
+      </p>
+
+      <a class="download" href="/ca.crt">Download the certificate</a>
+
+      <details open>
+        <summary>iPhone and iPad</summary>
+        <ol>
+          <li>
+            Open this page in <b>Safari</b>, even if you browse in Brave or Chrome, then tap
+            <b>Download the certificate</b> above and <b>Allow</b>. Once it's trusted, every browser on the
+            device trusts it.
+          </li>
+          <li>
+            Open <b>Settings</b> and tap <b>Profile Downloaded</b> near the top (or find it under <b>General</b>,
+            <b>VPN &amp; Device Management</b>). Tap <b>Install</b>, enter your passcode, and tap <b>Install</b>
+            again.
+          </li>
+          <li>
+            Still in <b>Settings</b>, go to <b>General</b>, <b>About</b>, then <b>Certificate Trust Settings</b>
+            at the very bottom, and turn on <span class="name">{{.AuthorityName}}</span>.
+          </li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>Mac</summary>
+        <ol>
+          <li>Click <b>Download the certificate</b> above, then open the file. Keychain Access adds it.</li>
+          <li>
+            In Keychain Access, find <span class="name">{{.AuthorityName}}</span> under <b>Certificates</b>
+            and double-click it.
+          </li>
+          <li>Open <b>Trust</b> and set <b>When using this certificate</b> to <b>Always Trust</b>.</li>
+          <li>Close the window and enter your password.</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>Windows</summary>
+        <ol>
+          <li>Click <b>Download the certificate</b> above, then open the file and click <b>Install Certificate</b>.</li>
+          <li>Choose <b>Current User</b>, then <b>Place all certificates in the following store</b>.</li>
+          <li>Browse to <b>Trusted Root Certification Authorities</b>, finish, and say <b>Yes</b> to the warning.</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>Linux, in Vivaldi, Chrome, Chromium or Brave</summary>
+        <ol>
+          <li>Click <b>Download the certificate</b> above.</li>
+          <li>
+            In a terminal, install the tool that adds certificates to the browser, if it isn't there yet:
+            <code>sudo apt install libnss3-tools</code>
+          </li>
+          <li>
+            Add the certificate:
+            <code>certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "{{.AuthorityName}}" -i ~/Downloads/ca.crt</code>
+          </li>
+          <li>Quit the browser completely, then open it again.</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>Android</summary>
+        <ol>
+          <li>Tap <b>Download the certificate</b> above.</li>
+          <li>
+            Open <b>Settings</b>, <b>Security &amp; privacy</b>, <b>More security settings</b>,
+            <b>Encryption &amp; credentials</b>, <b>Install a certificate</b>, then <b>CA certificate</b>.
+          </li>
+          <li>Pick <b>ca.crt</b> from your downloads.</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>Firefox, on a computer</summary>
+        <ol>
+          <li>Firefox keeps its own list, so do this as well as the steps for your computer.</li>
+          <li>
+            Open <b>Settings</b>, <b>Privacy &amp; Security</b>, <b>View Certificates</b>, <b>Authorities</b>,
+            then <b>Import</b>, and pick the file you downloaded.
+          </li>
+          <li>Check <b>Trust this CA to identify websites</b>.</li>
+        </ol>
+      </details>
+
+      <p class="finish">
+        Then open <a href="{{.SecureAddress}}">{{.SecureAddress}}</a>. If it opens without a warning, you're
+        all set. On an iPhone or iPad, add it to your Home Screen from there in Safari (tap <b>Share</b>, then
+        <b>Add to Home Screen</b>), and it will open even away from home.
+      </p>
+    </main>
+  </body>
+</html>

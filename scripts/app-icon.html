@@ -1,0 +1,51 @@
+<!doctype html>
+<!--
+  The home-screen icon, drawn at 512 by 512. The PNGs in web/public are screenshots of this page:
+
+    chromium --headless=new --mute-audio --hide-scrollbars --force-device-scale-factor=1 \
+      --window-size=512,512 --screenshot=web/public/icon-512.png scripts/app-icon.html
+    magick web/public/icon-512.png -resize 192x192 web/public/icon-192.png
+    magick web/public/icon-512.png -resize 180x180 web/public/apple-touch-icon.png
+
+  It's square and runs to the edges on purpose: phones round the corners themselves, and paint anything
+  transparent black. The R stays inside the middle 80% so Android can crop it to a circle.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body
+      {
+        width: 512px;
+        height: 512px;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body
+      {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #e5393a 0%, #f57c00 20%, #f2b200 38%, #2e9e48 55%, #1e7fe0 70%,
+          #4b4fc4 85%, #9334c9 100%);
+        color: #ffffff;
+        font-family: "Noto Sans", sans-serif;
+        font-size: 300px;
+        font-weight: 800;
+        line-height: 1;
+        text-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      }
+
+      span
+      {
+        position: relative;
+        top: -6px;
+      }
+    </style>
+  </head>
+  <body>
+    <span>R</span>
+  </body>
+</html>

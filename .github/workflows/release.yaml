@@ -1,0 +1,46 @@
+# Runs when a version tag like v1.0.0 is pushed: every test first, then the three downloads, attached to a
+# new GitHub release named after the tag, with notes listing what changed since the last one.
+#
+#   git tag v1.0.0
+#   git push origin v1.0.0
+name: Release
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+jobs:
+  tests:
+    uses: ./.github/workflows/tests.yaml
+
+  release:
+    needs: tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Build the website into the program
+        run: bunx --bun vite build && bun scripts/build-worker.ts
+
+      - name: Build the downloads for Mac, Windows and Linux
+        working-directory: server
+        run: go run ./cmd/release -version "$GITHUB_REF_NAME"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/*.zip --title "Recipes $GITHUB_REF_NAME" --generate-notes

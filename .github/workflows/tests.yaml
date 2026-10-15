@@ -1,0 +1,50 @@
+# Runs on every push to main and every pull request, and before every release: the typecheck, both test
+# suites, then the Linux download, unzipped and checked the way someone who downloads it would run it.
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Website tests
+        run: bun run test:web
+
+      # the server's tests read the built website, which is never committed.
+      - name: Build the website into the program
+        run: bunx --bun vite build && bun scripts/build-worker.ts
+
+      - name: Server tests
+        run: bun run test:server
+
+      - name: Build the Linux download
+        working-directory: server
+        run: go run ./cmd/release -only linux -version ci
+
+      - name: Run the download's own check on its starter recipes
+        run: |
+          unzip -q release/recipes-ci-linux.zip -d unzipped
+          unzipped/recipes-ci-linux/recipes check
+          unzipped/recipes-ci-linux/recipes version

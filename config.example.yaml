@@ -1,0 +1,25 @@
+# The settings for Recipes. The program reads the config.yaml sitting next to it, so a downloaded copy
+# keeps this file there, named config.yaml. To keep it somewhere else, start the program with
+# -config path/to/config.yaml.
+
+# Where your recipe cards live: a folder of .yaml files, one per recipe. A path like the one below is read
+# from this file's folder, and a full path works too, so the cards can live anywhere:
+#   macOS:    /Users/you/Documents/recipes
+#   Windows:  C:\Users\you\Documents\recipes
+#   Linux:    /home/you/recipes
+recipesFolder: recipe-cards
+
+# Where the site listens. 0.0.0.0 lets phones and tablets on the same Wi-Fi reach it, and 8686 is the
+# port, which goes at the end of the address, as in http://localhost:8686.
+listen: 0.0.0.0:8686
+
+# Optional: https. It lets a phone keep its own copy of the site for when it's away from home, and keep its
+# screen on while you cook. Uncomment both lines, run the certs command once (`./recipes certs`, or
+# `recipes.exe certs` on Windows), and start the site again. Each phone then visits the trust address the
+# program prints, once. The folder holds a private key, so keep it to yourself.
+# certificates: certs
+# listenSecure: 0.0.0.0:8443
+
+# Optional, Linux only: a name for the site on the Wi-Fi, like http://recipes.local, which the program asks
+# Avahi to answer for. It has to be one word and .local.
+# name: recipes.local
