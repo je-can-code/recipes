@@ -7,7 +7,8 @@ How a recipe card should read, for anyone writing one, person or agent. The form
 
 - Read `_template.yaml`. It defines every field, in comments.
 - Read three finished cards for the voice: `prehistoric-meat.yaml` (a made-up dish, interpreted),
-  `lords-ozoni.yaml` (a real regional dish) and `fruit-punch.yaml` (a drink).
+  `rice-omelet.yaml` (a real dish behind a game's name) and `fruit-punch.yaml` (a drink). All three come with
+  the starter cards.
 
 ## The format's traps
 
@@ -75,8 +76,8 @@ How a recipe card should read, for anyone writing one, person or agent. The form
   boil. Put lids on pots and be generous with times.
 - A weak oven. Preheat for 20 minutes, longer than the beep says.
 - A 12-inch stainless skillet (All-Clad). To sear, preheat the empty pan in the oven first.
-- An air fryer, which is the answer to the weak oven for small, crisp things. A Zojirushi rice cooker. An
-  instant-read thermometer.
+- An air fryer, which is the answer to the weak oven for small, crisp things. A small Zojirushi rice cooker
+  that makes 2 rice cooker cups at most, enough for four. An instant-read thermometer.
 - No microwave, ever. Never write a step that needs one.
 - No blender, stand mixer, food processor, juicer or ice cream maker is confirmed. A card that leans on
   one is written for it, with a note giving a fallback where there is one: shake it in a jar, whisk it,
