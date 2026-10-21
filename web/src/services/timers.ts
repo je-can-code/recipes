@@ -1,16 +1,28 @@
 import type { BrowserStorage } from './storage';
 
 /**
- * One kitchen timer. Name is what it's for, like a step's lead ("Simmer the vegetables."), and label is
- * the time as the recipe wrote it ("8 to 10 minutes"). It's kept as the moment it goes off rather than as
+ * One kitchen timer. Slug and title are the recipe it belongs to, so its chip can say whose it is and lead
+ * back there from any page. Name is what it's for, like a step's lead ("Simmer the vegetables."), and label
+ * is the time as the recipe wrote it ("8 to 10 minutes"). It's kept as the moment it goes off rather than as
  * a countdown, so a phone that slept through it still knows exactly when it rang.
  */
 interface Timer
 {
   id: string;
+  slug: string;
+  title: string;
   name: string;
   label: string;
   endsAt: number;
+}
+
+/**
+ * The recipe a timer is started from.
+ */
+interface TimerRecipe
+{
+  slug: string;
+  title: string;
 }
 
 /**
@@ -19,17 +31,18 @@ interface Timer
 const forgetAfter = 60 * 60 * 1000;
 
 /**
- * Starts a timer alongside any already running.
+ * Starts a timer alongside any already running, from any recipe.
  * @param {Timer[]} timers The timers already running.
+ * @param {TimerRecipe} recipe The recipe it's for.
  * @param {string} name What the timer is for.
  * @param {string} label The time as the recipe wrote it.
  * @param {number} seconds How long it runs.
  * @param {number} now The time, in milliseconds since 1970.
  * @returns {Timer[]} Every timer, with the new one last.
  */
-const startTimer = (timers: Timer[], name: string, label: string, seconds: number, now: number): Timer[] =>
+const startTimer = (timers: Timer[], recipe: TimerRecipe, name: string, label: string, seconds: number, now: number): Timer[] =>
 {
-  const timer = { id: `${now}-${timers.length}`, name, label, endsAt: now + seconds * 1000 };
+  const timer = { id: `${now}-${timers.length}`, slug: recipe.slug, title: recipe.title, name, label, endsAt: now + seconds * 1000 };
   return [ ...timers, timer ];
 };
 
@@ -96,28 +109,24 @@ const formatClock = (seconds: number): string =>
 };
 
 /**
- * The key one recipe's timers are saved under.
- * @param {string} slug The recipe's name.
- * @returns {string} The storage key.
+ * The key every timer is saved under. There's one list for the whole site, so a timer keeps running, and
+ * ringing, whichever page is open.
  */
-const timersKey = (slug: string): string =>
-{
-  return `recipes.timers.${slug}`;
-};
+const timersKey = 'recipes.timers';
 
 /**
- * Reads a recipe's saved timers, so leaving the page and coming back doesn't lose them. Timers that went off
- * more than an hour ago are forgotten, and anything unreadable comes back as no timers.
+ * Reads the saved timers, so leaving a page, or the site, and coming back doesn't lose them. Timers that went
+ * off more than an hour ago are forgotten, and so is anything unreadable, including a timer that doesn't say
+ * which recipe it belongs to, since its chip would have nowhere to lead.
  * @param {BrowserStorage} storage Where timers are kept.
- * @param {string} slug The recipe's name.
  * @param {number} now The time, in milliseconds since 1970.
  * @returns {Timer[]} The timers still worth showing.
  */
-const loadTimers = (storage: BrowserStorage, slug: string, now: number): Timer[] =>
+const loadTimers = (storage: BrowserStorage, now: number): Timer[] =>
 {
   try
   {
-    const saved = storage.getItem(timersKey(slug));
+    const saved = storage.getItem(timersKey);
     if (saved === null)
     {
       return [];
@@ -131,7 +140,7 @@ const loadTimers = (storage: BrowserStorage, slug: string, now: number): Timer[]
     }
     return parsed.filter((timer: Timer) =>
     {
-      return typeof timer.endsAt === 'number' && now - timer.endsAt <= forgetAfter;
+      return typeof timer.endsAt === 'number' && typeof timer.slug === 'string' && now - timer.endsAt <= forgetAfter;
     });
   }
   catch
@@ -141,21 +150,20 @@ const loadTimers = (storage: BrowserStorage, slug: string, now: number): Timer[]
 };
 
 /**
- * Saves a recipe's timers, removing the entry once none are left.
+ * Saves every timer, removing the entry once none are left.
  * @param {BrowserStorage} storage Where timers are kept.
- * @param {string} slug The recipe's name.
  * @param {Timer[]} timers Every timer.
  */
-const saveTimers = (storage: BrowserStorage, slug: string, timers: Timer[]): void =>
+const saveTimers = (storage: BrowserStorage, timers: Timer[]): void =>
 {
   try
   {
     if (timers.length === 0)
     {
-      storage.removeItem(timersKey(slug));
+      storage.removeItem(timersKey);
       return;
     }
-    storage.setItem(timersKey(slug), JSON.stringify(timers));
+    storage.setItem(timersKey, JSON.stringify(timers));
   }
   catch
   {
@@ -164,4 +172,4 @@ const saveTimers = (storage: BrowserStorage, slug: string, timers: Timer[]): voi
 };
 
 export { byUrgency, formatClock, isRinging, loadTimers, saveTimers, secondsLeft, startTimer, stopTimer };
-export type { Timer };
+export type { Timer, TimerRecipe };

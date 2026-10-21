@@ -1,4 +1,5 @@
 import type { RecipeDetail, RecipeEntry } from '../types';
+import { readNumber } from './amounts';
 
 /**
  * One length of time found in a recipe's text, like "5 to 6 minutes". Start and end are where the phrase
@@ -79,30 +80,13 @@ const toSeconds = (
 {
   if (hours !== undefined && minutes !== undefined)
   {
-    return Math.round(toNumber(hours) * 3600 + toNumber(minutes) * 60);
+    return Math.round(readNumber(hours) * 3600 + readNumber(minutes) * 60);
   }
   if (low !== undefined && unit !== undefined)
   {
-    return Math.round(toNumber(low) * secondsPer[singular(unit)]);
+    return Math.round(readNumber(low) * secondsPer[singular(unit)]);
   }
   return secondsPer[singular(singleUnit ?? '')];
-};
-
-/**
- * Turns a written amount into a number: "1 1/2" is 1.5, "1/2" is 0.5 and "5" is 5.
- * @param {string} written The amount as written.
- * @returns {number} Its value.
- */
-const toNumber = (written: string): number =>
-{
-  return written
-    .trim()
-    .split(/\s+/)
-    .reduce((total, part) =>
-    {
-      const [ top, bottom ] = part.split('/');
-      return total + (bottom === undefined ? Number(top) : Number(top) / Number(bottom));
-    }, 0);
 };
 
 /**

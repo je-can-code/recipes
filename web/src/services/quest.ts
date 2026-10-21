@@ -116,4 +116,16 @@ const timerChipText = (timer: Timer, now: number, isArmed: boolean): string =>
   return isArmed ? 'Stop?' : formatClock(secondsLeft(timer, now));
 };
 
-export { countIngredients, isCooking, questDetail, questLabel, questPercent, restartLabel, timerChipText };
+/**
+ * What a timer's chip calls it: its step's lead on its own recipe's page, and the recipe's title in front of
+ * that anywhere else, so a timer from another recipe says whose it is.
+ * @param {Timer} timer The timer.
+ * @param {string} slug The recipe on screen, or '' off a recipe's page.
+ * @returns {string} The chip's name.
+ */
+const timerChipName = (timer: Timer, slug: string): string =>
+{
+  return timer.slug === slug ? timer.name : `${timer.title} · ${timer.name}`;
+};
+
+export { countIngredients, isCooking, questDetail, questLabel, questPercent, restartLabel, timerChipName, timerChipText };

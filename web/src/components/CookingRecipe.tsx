@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
+import { useMeasure } from '../hooks/useMeasure';
 import { useProgress } from '../hooks/useProgress';
 import { useTimers } from '../hooks/useTimers';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { batchStops, effectiveMeasure } from '../services/measures';
 import { countIngredients, isCooking } from '../services/quest';
 import type { RecipeDetail } from '../types';
 import { Confetti } from './Confetti';
@@ -16,10 +19,11 @@ interface CookingRecipeProps
 }
 
 /**
- * A recipe to cook along with: the recipe itself, checking off as it's tapped, the quest tracker following
- * along at the bottom, kitchen timers, the screen kept on mid-cook wherever the browser allows it, and
- * confetti for the last step. Give it a key per recipe, so moving to another recipe starts that recipe's
- * own quest rather than carrying this one's over.
+ * A recipe to cook along with: the recipe itself, checking off as it's tapped, at the batch size and in the
+ * measuring system the cook chose; the quest tracker following along at the bottom; kitchen timers, which
+ * belong to the whole site so they keep running on any page; the screen kept on mid-cook wherever the browser
+ * allows it; and confetti for the last step. Give it a key per recipe, so moving to another recipe starts that
+ * recipe's own quest and batch size rather than carrying this one's over.
  * @param {CookingRecipeProps} props The recipe.
  * @returns {React.JSX.Element} The recipe, the tracker, and any party in progress.
  */
@@ -27,19 +31,38 @@ const CookingRecipe = ({ recipe }: CookingRecipeProps): React.JSX.Element =>
 {
   const stepCount = recipe.method.steps.length;
   const cooking = useProgress(recipe.slug, stepCount);
-  const kitchen = useTimers(recipe.slug);
+  const kitchen = useTimers();
+  const batch = useMeasure(recipe.slug);
+  const stops = useMemo(() => batchStops(recipe), [ recipe ]);
+  const measure = useMemo(() => effectiveMeasure(stops, batch.measure), [ stops, batch.measure ]);
   const isScreenKeptOn = useWakeLock(isCooking(cooking.progress, stepCount) || kitchen.timers.length > 0);
+
+  /**
+   * Starts a timer for this recipe, so its chip can say whose it is from any page.
+   * @param {string} name What the timer is for.
+   * @param {string} label The time as the recipe wrote it.
+   * @param {number} seconds How long it runs.
+   */
+  const startTimer = (name: string, label: string, seconds: number): void =>
+  {
+    kitchen.start({ slug: recipe.slug, title: recipe.title }, name, label, seconds);
+  };
 
   return (
     <>
       <RecipeArticle
         recipe={recipe}
         progress={cooking.progress}
+        measure={measure}
+        stops={stops}
         onCheckIngredient={cooking.checkIngredient}
         onCheckStep={cooking.checkStep}
-        onStartTimer={kitchen.start}
+        onStartTimer={startTimer}
+        onChooseFactor={batch.chooseFactor}
+        onChooseSystem={batch.chooseSystem}
       />
       <QuestTracker
+        slug={recipe.slug}
         stepLeads={recipe.method.steps.map((step) => step.lead)}
         ingredientCount={countIngredients(recipe.ingredients)}
         progress={cooking.progress}
