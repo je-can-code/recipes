@@ -13,18 +13,22 @@ import (
 )
 
 // Page is a recipe as the site shows it, with every markdown field rendered to HTML. The title, times,
-// tags and group names stay plain text, since the site only ever shows those as they are.
+// tags and group names stay plain text, since the site only ever shows those as they are. Scales says
+// whether the page may offer other batch sizes.
 type Page struct {
 	Intro       string      `json:"intro"`
+	Scales      bool        `json:"scales"`
 	Ingredients []PageGroup `json:"ingredients"`
 	Method      PageMethod  `json:"method"`
 	Notes       []PageEntry `json:"notes"`
 }
 
-// PageGroup is an ingredient group with its items and closing paragraph rendered.
+// PageGroup is an ingredient group with its items and closing paragraph rendered. Keys runs alongside
+// Items, holding each line's key with its braces taken off, or "" for a line without one.
 type PageGroup struct {
 	Name  string   `json:"name"`
 	Items []string `json:"items"`
+	Keys  []string `json:"keys"`
 	After string   `json:"after"`
 }
 
@@ -66,26 +70,33 @@ func newRenderer(known map[string]bool) renderer {
 // card links to that have no card behind them.
 func (renderer renderer) renderCard(card Card) (Page, []string, error) {
 	render := &pageRender{renderer: renderer, missing: []string{}}
+	keys := cardKeys(card.Ingredients)
 
 	page := Page{
 		Intro:       render.block(card.Intro),
+		Scales:      card.Scales,
 		Ingredients: []PageGroup{},
 		Method: PageMethod{
-			Before: render.block(card.Method.Before),
-			Steps:  render.entries(card.Method.Steps),
-			After:  render.block(card.Method.After),
+			Before: render.measuredBlock(card.Method.Before, keys),
+			Steps:  render.entries(card.Method.Steps, keys),
+			After:  render.measuredBlock(card.Method.After, keys),
 		},
-		Notes: render.entries(card.Notes),
+		Notes: render.entries(card.Notes, keys),
 	}
 	for _, group := range card.Ingredients {
 		items := []string{}
+		itemKeys := []string{}
 		for _, item := range group.Items {
-			items = append(items, render.inline(item))
+			// the key is for steps to point at, so the line itself shows without it.
+			text, key, _ := splitKey(item)
+			items = append(items, render.inline(text))
+			itemKeys = append(itemKeys, key)
 		}
 		page.Ingredients = append(page.Ingredients, PageGroup{
 			Name:  group.Name,
 			Items: items,
-			After: render.block(group.After),
+			Keys:  itemKeys,
+			After: render.measuredBlock(group.After, keys),
 		})
 	}
 
@@ -134,16 +145,29 @@ func (render *pageRender) inline(source string) string {
 	return strings.TrimSuffix(strings.TrimPrefix(html, "<p>"), "</p>")
 }
 
-// entries renders a list of steps or notes.
-func (render *pageRender) entries(entries []LeadText) []PageEntry {
+// entries renders a list of steps or notes, with the braces in each one's text turned into spans.
+func (render *pageRender) entries(entries []LeadText, keys map[string]bool) []PageEntry {
 	rendered := []PageEntry{}
 	for _, entry := range entries {
 		rendered = append(rendered, PageEntry{
 			Lead: render.inline(entry.Lead),
-			Text: render.inline(entry.Text),
+			Text: render.measuredInline(entry.Text, keys),
 		})
 	}
 	return rendered
+}
+
+// measuredBlock renders markdown that may hold braces, as block does, with each pair of braces turned into
+// a span the page can scale.
+func (render *pageRender) measuredBlock(source string, keys map[string]bool) string {
+	marked, spans := markTokens(source, keys)
+	return fillTokens(render.block(marked), spans)
+}
+
+// measuredInline is measuredBlock for a single line, like a step's text.
+func (render *pageRender) measuredInline(source string, keys map[string]bool) string {
+	marked, spans := markTokens(source, keys)
+	return fillTokens(render.inline(marked), spans)
 }
 
 // recipeLinks points every link written as a bare recipe name at that recipe's page. Web addresses,

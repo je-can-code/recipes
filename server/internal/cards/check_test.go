@@ -36,6 +36,21 @@ func TestDecodeCardReadsANumberAsText(t *testing.T) {
 	}
 }
 
+// TestDecodeCardReadsScales covers scales: true, which a card says once it's written for batch sizes.
+func TestDecodeCardReadsScales(t *testing.T) {
+	// Arrange.
+	content := cardWithLine(t, "time: about 10 minutes", "time: about 10 minutes\nscales: true")
+
+	// Act.
+	card, messages := decodeCard([]byte(content))
+
+	// Assert.
+	assertStrings(t, messages, nil)
+	if card.Scales == false {
+		t.Fatal("scales is false, expected true")
+	}
+}
+
 // TestDecodeCardExplainsAColonInsideAnItem covers the classic YAML trap: an unquoted colon followed by a
 // space turns an ingredient into a key and a value.
 func TestDecodeCardExplainsAColonInsideAnItem(t *testing.T) {

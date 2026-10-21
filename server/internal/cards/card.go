@@ -10,12 +10,17 @@ package cards
 // Decoding is strict on purpose. A key the format doesn't define is an error, and so is a value of the
 // wrong shape, which is how a sentence with an unquoted colon gets caught: YAML reads it as a key and a
 // value, so a mapping turns up where text belongs.
+//
+// Scales says the card is written for the page's batch sizes: every amount its text names outside the
+// ingredients is in braces, points at an ingredient by key, or says it's per piece. It's opt-in, and the
+// check holds a card that says it to that promise.
 type Card struct {
 	Title       string            `yaml:"title"`
 	Intro       string            `yaml:"intro"`
 	Serves      string            `yaml:"serves"`
 	Makes       string            `yaml:"makes"`
 	Time        string            `yaml:"time"`
+	Scales      bool              `yaml:"scales"`
 	Tags        []string          `yaml:"tags"`
 	Ingredients []IngredientGroup `yaml:"ingredients"`
 	Method      Method            `yaml:"method"`
