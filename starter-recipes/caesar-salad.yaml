@@ -7,33 +7,34 @@ intro: >-
 
 serves: 2 as a main, 4 as a side
 time: about 25 minutes
+scales: true
 tags: [ salad, side, lunch, game, star-ocean, so4, so5 ]
 
 ingredients:
   - name: Croutons
     items:
-      - 3 cups day-old crusty bread (ciabatta or a baguette), cut into 3/4-inch cubes
+      - 3 cups day-old crusty bread (ciabatta or a baguette), cut into 3/4-inch cubes {bread}
       - 2 tbsp olive oil
       - 1 small garlic clove, grated
       - Pinch of salt
   - name: Dressing
     items:
-      - 1/3 cup mayonnaise
-      - 1 lemon, a little zest and 2 tbsp juice
+      - 1/3 cup mayonnaise {mayonnaise}
+      - 2 tbsp lemon juice and a little zest (from about 1 lemon) {lemon-juice}
       - 1 small garlic clove, grated
-      - 2 anchovy fillets, mashed, or 1 tsp anchovy paste
-      - 1 tsp Dijon mustard
-      - 1 tsp Worcestershire sauce
-      - 1/3 cup finely grated Parmesan
-      - 2 tbsp olive oil
+      - 2 anchovy fillets, mashed (or 1 tsp anchovy paste) {anchovies}
+      - 1 tsp Dijon mustard {mustard}
+      - 1 tsp Worcestershire sauce {Worcestershire}
+      - 1/3 cup finely grated Parmesan {Parmesan}
+      - 2 tbsp olive oil {olive-oil}
       - Black pepper
-      - 1 to 2 tbsp water, to thin
+      - 1 to 2 tbsp water, to thin {water}
     after: >-
       Store-bought mayonnaise is made with pasteurized egg, so the dressing needs no raw yolk. Leave out the
       anchovies if you don't like them, since the Worcestershire carries a little anchovy already.
   - name: Salad
     items:
-      - 2 romaine hearts
+      - 2 romaine hearts {romaine}
       - A chunk of Parmesan, for shaving
       - Lemon wedges
 
@@ -41,18 +42,18 @@ method:
   steps:
     - lead: Make the croutons.
       text: >-
-        Toss the bread cubes in a bowl with the olive oil, grated garlic and salt until they've soaked it up.
-        Air-fry them at 375°F for 5 to 7 minutes, shaking the basket halfway, until they're golden and crunchy
-        all the way through. They crisp up more as they cool.
+        Toss {bread} in a bowl with the olive oil, grated garlic and salt until the cubes have soaked it up.
+        Air-fry them in one layer at 375°F for 5 to 7 minutes, in batches if they don't all fit, shaking the
+        basket halfway, until they're golden and crunchy all the way through. They crisp up more as they cool.
     - lead: Whisk the dressing.
       text: >-
-        In a bowl, whisk the mayonnaise, lemon zest and juice, garlic, anchovies, mustard and Worcestershire
-        until smooth. Whisk in the Parmesan, then the olive oil in a slow drizzle, and season with plenty of
-        pepper. Add water a little at a time until it pours like heavy cream. Taste it: it should be punchy,
-        since the leaves will mellow it.
+        In a bowl, whisk {mayonnaise}, {lemon-juice} and zest, the garlic, {anchovies}, {mustard} and
+        {Worcestershire} until smooth. Whisk in {Parmesan}, then {olive-oil} in a slow drizzle, and season
+        with plenty of pepper. Add {water} a little at a time until it pours like heavy cream. Taste it: it
+        should be punchy, since the leaves will mellow it.
     - lead: Prep the romaine.
       text: >-
-        Cut the root ends off the hearts, separate the leaves, and tear the big ones into 2-inch pieces, leaving
+        Cut the root ends off {romaine}, separate the leaves, and tear the big ones into 2-inch pieces, leaving
         the small inner ones whole. Wash them and dry them completely in a salad spinner or rolled up in a clean
         towel, since dressing slides off wet leaves. Keep them in the fridge until you're ready to eat.
     - lead: Dress the leaves.
@@ -67,14 +68,14 @@ method:
 notes:
   - lead: "Make it dinner:"
     text: >-
-      lay hot sliced chicken over the top. Season a chicken breast with salt and pepper, sear it in the skillet
-      over medium-high for 5 to 6 minutes a side, until it reads 165°F in the thickest part, and rest it for
-      5 minutes. Slice it over the salad and pour the pan juices over the leaves.
+      lay hot sliced chicken over the top. Season {1 chicken breast} with salt and pepper and sear in the
+      skillet over medium-high for 5 to 6 minutes a side, until the thickest part reads 165°F, then rest for
+      5 minutes. Slice over the salad and pour the pan juices over the leaves.
   - lead: "Classic yolk dressing:"
     text: >-
-      for the old-style dressing, use the yolk of an egg pasteurized in the shell (the carton says so) in place
-      of the mayonnaise. Whisk it with the lemon, garlic, anchovies, mustard and Worcestershire, then whisk in
-      1/2 cup olive oil a few drops at a time until it thickens, and finish with the Parmesan.
+      for the old-style dressing, use {1 egg yolk} from eggs pasteurized in the shell (the carton says so) in
+      place of the mayonnaise. Whisk it with the lemon, garlic, anchovies, mustard and Worcestershire, then
+      whisk in {1/2 cup} olive oil a few drops at a time until it thickens, and finish with the Parmesan.
   - lead: "Make ahead:"
     text: >-
       the dressing keeps 4 days in the fridge, and the croutons keep 3 days in an airtight container. Dress the

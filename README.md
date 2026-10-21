@@ -2,8 +2,8 @@
 
 A small cookbook website that runs on your own computer, made for reading on your phone in the middle of
 cooking. It has a search box, shelves for your recipes, and one clean page per recipe, where you tap to
-check off ingredients and steps, tap any time in a step to start a timer, and get a confetti party when you
-finish. No ads, no life stories, just the recipe.
+check off ingredients and steps, make the recipe bigger or smaller, switch to metric, tap any time in a step
+to start a timer, and get a confetti party when you finish. No ads, no life stories, just the recipe.
 
 <p>
   <picture>
@@ -91,6 +91,9 @@ new one, run the certs command again and start the site again; phones don't need
 Each recipe is a YAML file in the cards folder. `recipe-cards/_template.yaml` explains every field, and the
 starter cards show what finished ones look like. A new or changed card shows up the next time the page
 loads, with no restart.
+
+A card can offer other batch sizes, from a quarter to four times, once it's written for them: see "A card
+that scales" in [`docs/writing-cards.md`](docs/writing-cards.md).
 
 To keep your recipes somewhere else, point `recipesFolder` in `config.yaml` at that folder. It can be
 anywhere: your Documents folder, a synced folder, another drive.
@@ -206,9 +209,9 @@ build again and restart.
 1. **The cards are YAML files on disk**, one per recipe. `_template.yaml` in the cards folder defines the
    format, and `_collections.yaml` beside it lists the collections that get shelves.
 2. **The Go server reads them** (`server/internal/cards`). It decodes each card strictly, checks it
-   against the format's rules, renders its markdown to HTML, and points links between recipes at their
-   pages. Anything wrong becomes a problem naming the file and saying what to fix, and every good card
-   still loads.
+   against the format's rules, renders its markdown to HTML, points links between recipes at their
+   pages, and turns the braces in its steps into spans the page can scale. Anything wrong becomes a
+   problem naming the file and saying what to fix, and every good card still loads.
 3. **It serves them as JSON** (`server/internal/api`). `GET /api/recipes` lists every recipe along with
    the collections and every problem, and `GET /api/recipes/{name}` returns one recipe, ready to show.
 4. **The website is a React app** (`web/`), built once into `server/internal/site/dist` and baked into
@@ -235,12 +238,19 @@ A recipe page is built to cook along with, not just to read:
   party, once; reopening a finished recipe just shows it finished.
 - **Every time in the method is a timer.** "8 to 10 minutes" becomes a button, and tapping it starts a
   countdown for the low end of the range, named after its step. Running timers ride along in the tracker,
-  soonest first, and chime when they're done.
+  soonest first, and chime when they're done, whichever page is open. Off a recipe's page, a dock at the
+  bottom shows them, each one leading back to its recipe.
+- **Make it bigger or smaller.** A card written for it gets a row of batch sizes under its serving line,
+  from ¼× to 4×. Every amount follows, including the ones a step points at, and the serving line does the
+  math. A size that would split an egg is greyed out, and times never change.
+- **US or metric.** The switch beside it shows milliliters, grams, °C and centimeters instead, keeping
+  teaspoons, tablespoons and rice cooker cups, which are the same size in Japan.
 - **On a tablet**, the ingredients get a column of their own that stays put while the steps scroll.
 
-All of it is kept in the browser, per recipe, in localStorage, so a reload or a trip to another page picks
-up where the cook left off. Progress goes stale after a day, and a timer is forgotten an hour after it
-rang. Nothing about cooking reaches the server, and nothing in it changes the cards.
+All of it is kept in the browser, in localStorage, so a reload or a trip to another page picks up where the
+cook left off. Progress and the batch size are kept per recipe and go stale after a day, the measuring system
+is one choice for the whole site, and a timer is forgotten an hour after it rang. Nothing about cooking
+reaches the server, and nothing in it changes the cards.
 
 **The screen stays on mid-cook**, from the first checkmark to the last step or while a timer runs, and the
 tracker says "screen on" while it does. That's the Screen Wake Lock API, which browsers only allow on secure
@@ -387,9 +397,9 @@ carry a private key or anything from a `certs` folder.
 | `scripts/app-icon.html` | The home-screen icon, which the PNGs in `web/public` are screenshots of |
 | `scripts/build-worker.ts` | Builds the service worker into the site as `sw.js`, after Vite has built the rest, with the build's name and file list written in |
 | `web/src/worker` | The service worker. `policy.ts` and `strategies.ts` decide what's saved and when the copy answers, as plain tested functions, and `sw.ts` connects them to the browser. `tsconfig.worker.json` checks it against a worker's globals rather than a page's |
-| `web/src/services` | Search, shelves, courses and the home page's address, link handling, the API client, installing the service worker, and everything cooking runs on (progress, timers and finding times in a step, the tracker's words, confetti physics, the chime), as plain tested functions |
-| `web/src/hooks` | The glue between those services and the browser: loading a recipe, saving progress, ticking timers, the screen wake lock, remembering which courses are open |
-| `web/src/pages`, `web/src/components` | The pages and their pieces, kept free of logic. `CookingRecipe` puts a recipe, its tracker and its confetti together |
+| `web/src/services` | Search, shelves, courses and the home page's address, link handling, the API client, installing the service worker, and everything cooking runs on (progress, timers and finding times in a step, batch sizes and metric in `amounts.ts` and `measures.ts`, the tracker's words, confetti physics, the chime), as plain tested functions |
+| `web/src/hooks` | The glue between those services and the browser: loading a recipe, saving progress, running the site's timers, remembering the batch size and measuring system, the screen wake lock, remembering which courses are open |
+| `web/src/pages`, `web/src/components` | The pages and their pieces, kept free of logic. `CookingRecipe` puts a recipe, its tracker and its confetti together, and `TimersProvider` runs the timers around the whole app |
 | `web/test` | The website's tests |
 
 ## License

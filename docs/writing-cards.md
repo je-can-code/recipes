@@ -70,6 +70,36 @@ How a recipe card should read, for anyone writing one, person or agent. The form
 - A dish built on another, like a bun filled with a game's curry, links to that card for the shared part
   and writes out the rest.
 
+## A card that scales
+
+The page can make a recipe from a quarter to four times as big, and show every amount in US or metric
+measures. It can only scale what it can see, so a card that scales keeps its amounts where the page looks.
+
+- Say `scales: true` once the card is written this way. Leave it out for anything a pan or a mold decides,
+  like a cake, a pie, a tart or a loaf, and for rice cooked in a pot by absorption, like a pilaf. Cookies,
+  buns, skewers and anything else made by the piece scale fine, since each piece stays the same size.
+- Amounts live in the ingredients. Start each line with its amount ("1 lemon, juiced", not "Juice of 1
+  lemon"), put the counted thing right after a count ("2 chicken thighs, boneless and skinless"), give each
+  amount its own line ("1 tbsp butter" and "1 tbsp neutral oil", not both on one), and write a package's size
+  with "each": "1 can (14.5 oz each) diced tomatoes".
+- Give a key to each ingredient a step or note points at: `3 cups water {water}`. Name it the way it reads
+  after "the": `{olive-oil}` is "the olive oil", and `{Sichuan-pepper}` keeps its capital.
+- Point at an ingredient where a step adds or measures it: "Pour in {sake}, then {water}." The page shows
+  "the sake (1 tbsp)". Later mentions in the same step are plain words. A share does the math for the cook:
+  `{half water}`, `{third water}`, `{quarter water}`, `{eighth water}`, `{double water}`, `{rest water}`, or a
+  fraction like `{2/3 water}`.
+- Put any other amount that grows with the recipe in braces: a yield ("about {2/3 cup} of puree"), a part set
+  aside ("set {2 tbsp} of it aside"), a seasoning check ("it usually wants about {1 tsp} salt"), a count of
+  pieces ("divide it into {4 portions}"), and a note's swap ("use {1 lb} thinly sliced pork").
+- Leave an amount that's per piece plain, and say so in its sentence: "about 1/3 cup of rice per ball", "add
+  water 1 tbsp at a time", "beat 3 eggs for each omelet". The check lets "per", "each", "apiece" and "at a
+  time" through.
+- Write a pan's or a cut's size with a hyphen, so it never reads as an amount: "a 6-quart pot", "a 12-inch
+  skillet", "1/2-inch cubes".
+- Times stay as they are. Heat soaks in by thickness, not by how much is in the pan, so a bigger batch cooks
+  for about the same time, and a step's cues ("until it coats a spoon") carry the rest.
+- No braces in a lead or the intro; the page shows those as they are.
+
 ## The kitchen
 
 - A glass electric flattop. No cast iron; the elements cycle and lag behind the dial, and water is slow to
