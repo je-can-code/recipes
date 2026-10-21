@@ -343,9 +343,10 @@ const measureLeading = (text: string, measure: Measure): string =>
 
 /**
  * The amounts in an ingredient line's parentheses, at a batch size: "(about 2 limes)" doubles at 2x, while a
- * size that says "each", like "(14.5 oz each)", stays put, since every can is still that big. In US measures
- * an "each" is left exactly as written, and a parenthesis holding a time is always left alone, since a wait
- * never changes with the batch; metric still converts any measure in it afterward.
+ * size that says "each", like "(14.5 oz each)", stays put, since every can is still that big. A size that says
+ * each is measured as written, so in US measures it reads exactly as the card has it and in metric it only
+ * converts. A parenthesis holding a time is always left alone, since a wait never changes with the batch;
+ * metric still converts any measure in it afterward.
  * @param {string} text Plain text from the line.
  * @param {Measure} measure The batch size and system.
  * @returns {string} The text, with its parentheses measured.
@@ -354,11 +355,14 @@ const measureParentheses = (text: string, measure: Measure): string =>
 {
   return text.replace(parenthetical, (whole: string, inside: string) =>
   {
-    const isEach = /\beach\b/i.test(inside);
-    if (timeWord.test(inside) || (isEach && measure.system === 'us'))
+    // a wait never changes with the batch.
+    if (timeWord.test(inside))
     {
       return whole;
     }
+
+    // a size that says each is the same for every can, however many there are.
+    const isEach = /\beach\b/i.test(inside);
     const here = isEach ? { factor: 1, system: measure.system } : measure;
     return `(${inside.replace(bracketedAmount, (written: string) => measureWritten(written, here))})`;
   });
