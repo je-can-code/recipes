@@ -312,9 +312,11 @@ const wholeAmount = (amount: Amount, factor: number): Amount =>
 };
 
 /**
- * An ingredient line's leading amount at a batch size, in a span the page can show off, with the counted
- * thing in the right number. Eggs and whole things round to whole ones. Pinches stay as written, and so does
- * a size in US measures, like a "12 inch oven-safe skillet", since neither changes with the batch.
+ * An ingredient line's leading amount at a batch size, in a span that makes it stand out, with the counted
+ * thing in the right number. Every leading amount gets the span, changed or not, so amounts look the same at
+ * every size and in either system. As written in US measures it's the card's own words, and so is a size in
+ * US measures, like a "12 inch oven-safe skillet", since a pan doesn't grow with the batch. Eggs and whole
+ * things round to whole ones, and pinches stay pinches.
  * @param {string} text The line's text before its first tag.
  * @param {Measure} measure The batch size and system.
  * @returns {string} The text, with its amount measured.
@@ -326,13 +328,15 @@ const measureLeading = (text: string, measure: Measure): string =>
   {
     return text;
   }
-  const isFixed = scalesWithBatch(found.amount.kind) === false;
-  if (isFixed && (found.amount.kind === 'pinch' || measure.system === 'us'))
+
+  // an amount that doesn't change keeps the card's own words, and stands out like any other.
+  const rest = text.slice(found.length);
+  const isFixed = scalesWithBatch(found.amount.kind) === false && measure.system === 'us';
+  if (isFixed || isAsWritten(measure.factor, measure.system))
   {
-    return text;
+    return `<span class="measured">${text.slice(0, found.length)}</span>${rest}`;
   }
 
-  const rest = text.slice(found.length);
   const isWhole = found.amount.kind === null && isIndivisible(rest);
   const amount = isWhole ? wholeAmount(found.amount, measure.factor) : found.amount;
   const factor = isWhole ? 1 : measure.factor;
@@ -369,19 +373,15 @@ const measureParentheses = (text: string, measure: Measure): string =>
 };
 
 /**
- * One ingredient line at a batch size and in a measuring system. As written in US measures, it's left exactly
- * alone.
+ * One ingredient line at a batch size and in a measuring system: its leading amount, then the amounts in its
+ * parentheses, then, in metric, any US measure left in its words. As written in US measures, every word stays
+ * exactly as the card has it, with only the leading amount marked to stand out.
  * @param {string} html The line, as HTML.
  * @param {Measure} measure The batch size and system.
  * @returns {string} The line, measured.
  */
 const measureItem = (html: string, measure: Measure): string =>
 {
-  if (isAsWritten(measure.factor, measure.system))
-  {
-    return html;
-  }
-
   const [ first, ...others ] = html.split(/(<[^>]+>)/);
   const led = [ measureLeading(first, measure), ...others ].join('');
   const bracketed = mapText(led, (text) => measureParentheses(text, measure));

@@ -183,7 +183,7 @@ describe('effectiveMeasure', () =>
  */
 describe('withMeasures', () =>
 {
-  it('leaves the lines alone as written in US measures, but fills in a pointer\'s amount', () =>
+  it('keeps the lines\' words as written in US measures, amounts standing out, and fills in a pointer\'s amount', () =>
   {
     // Arrange.
     const recipe = withStep(gravy(), `Whisk ${pointer('flour', '', 'the flour')} in.`);
@@ -193,9 +193,22 @@ describe('withMeasures', () =>
 
     // Assert.
     expect(measured.ingredients[0].items)
-      .toEqual([ '1/4 cup flour', '2 cups milk' ]);
+      .toEqual([ '<span class="measured">1/4 cup</span> flour', '<span class="measured">2 cups</span> milk' ]);
     expect(measured.method.steps[0].text)
       .toBe('Whisk <span class="ref">the flour <span class="ref-amount">(1/4 cup)</span></span> in.');
+  });
+
+  it('keeps an amount the math would tidy exactly as the card wrote it, as written in US measures', () =>
+  {
+    // Arrange- the math moves 6 tsp to 2 tbsp, and writes anything from 10 up as a whole number.
+    const recipe = withItems([ '6 tsp sugar', '14.5 oz crushed tomatoes' ]);
+
+    // Act.
+    const measured = withMeasures(recipe, { factor: 1, system: 'us' });
+
+    // Assert.
+    expect(measured.ingredients[0].items)
+      .toEqual([ '<span class="measured">6 tsp</span> sugar', '<span class="measured">14.5 oz</span> crushed tomatoes' ]);
   });
 
   it('doubles every line at 2x', () =>
@@ -354,7 +367,7 @@ describe('withMeasures', () =>
 
     // Assert.
     expect(measured.ingredients[0].items)
-      .toEqual([ '1/4 cup flour', '2 cups milk' ]);
+      .toEqual([ '<span class="measured">1/4 cup</span> flour', '<span class="measured">2 cups</span> milk' ]);
     expect(measured.method.steps[0].text)
       .toBe('<span class="ref">the milk <span class="ref-amount">(2 cups)</span></span>');
   });
@@ -401,7 +414,7 @@ describe('withMeasures', () =>
       .toEqual([ '<span class="measured">2</span> chicken thighs (rested about 30 minutes)' ]);
   });
 
-  it('leaves a size alone in US measures, and converts it in metric', () =>
+  it('keeps a size\'s words in US measures, and converts it in metric', () =>
   {
     // Arrange.
     const recipe = withItems([ '12 inch oven-safe skillet' ]);
@@ -411,10 +424,10 @@ describe('withMeasures', () =>
 
     // Assert.
     expect(measured.map((each) => each.ingredients[0].items[0]))
-      .toEqual([ '12 inch oven-safe skillet', '<span class="measured">30 cm</span> oven-safe skillet' ]);
+      .toEqual([ '<span class="measured">12 inch</span> oven-safe skillet', '<span class="measured">30 cm</span> oven-safe skillet' ]);
   });
 
-  it('rounds eggs to whole ones, and leaves a pinch alone', () =>
+  it('rounds eggs to whole ones, and keeps a pinch as written', () =>
   {
     // Arrange.
     const recipe = withItems([ '3 eggs', '1 pinch salt' ]);
@@ -424,7 +437,7 @@ describe('withMeasures', () =>
 
     // Assert.
     expect(measured.ingredients[0].items)
-      .toEqual([ '<span class="measured">2</span> eggs', '1 pinch salt' ]);
+      .toEqual([ '<span class="measured">2</span> eggs', '<span class="measured">1 pinch</span> salt' ]);
   });
 
   it('does the math on a serves line, every count in it', () =>
