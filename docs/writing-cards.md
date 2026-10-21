@@ -39,19 +39,35 @@ How a recipe card should read, for anyone writing one, person or agent. The form
 
 ## Game cards
 
-- The title is the in-game name, as the game spells it. Fix only a plain typo in the source list.
+- The title is the in-game name, as the game spells it, unless two games use it for different dishes (see
+  below). Fix only a plain typo in the source list.
 - The intro names the real dish behind it: omurice, kaki zoni, manga niku.
+- Where the game lists a dish's ingredients, build the real recipe on them, and swap anything made up or
+  impossible to buy for the nearest real thing.
 - A made-up dish gets a real-world take you would actually cook, and its intro opens with "An
   interpretation." Playful is welcome; edible is required.
 - Tags list the food first, then `game`, the series and the game itself:
-  `tags: [ chicken, dinner, game, star-ocean, so1 ]`. Every card from a game carries `game`. Reuse these
-  food tags before inventing a new one: beef, pork, chicken, seafood, egg, vegetarian, rice, noodles, soup,
-  salad, side, sauce, dessert, baking, drink, breakfast, brunch, lunch, dinner, snack.
+  `tags: [ chicken, dinner, game, star-ocean, so1 ]`, or `tags: [ pork, dinner, game, tales, arise ]`. Every
+  card from a game carries `game`. Reuse these food tags before inventing a new one: beef, pork, chicken,
+  seafood, egg, vegetarian, rice, noodles, soup, salad, side, sauce, dessert, baking, drink, breakfast,
+  brunch, lunch, dinner, snack.
 - Give every card at least one course tag (breakfast, brunch, lunch, dinner, soup, salad, side, sauce,
   snack, baking, dessert or drink). Every shelf lists its recipes under those headings.
 - A game gets a shelf of its own from an entry in `_collections.yaml` in the cards folder, keyed by the
   game's tag; until it has one, its cards sit on Home Cooking. Leave that file to whoever runs the batch,
   since writers work side by side.
+
+## A dish from more than one game
+
+- The same dish stays one card, even when another game calls it something else. Add the new game's tags,
+  and make sure the intro names each game it talks about, so nothing reads as true of only one of them.
+- When two games use one name for two different dishes, each gets its own card, and both titles say which
+  is which: two Hamburgers, one beef and one lamb, become Beef Smash Burger and Decadent Lamb Burger. Tag
+  both with the in-game name (`hamburger`), since search reads titles and tags and would otherwise lose it.
+- When versions of a dish differ only by the meat, write one card that offers each meat, with whatever
+  changes for each one, usually the cooking time.
+- A dish built on another, like a bun filled with a game's curry, links to that card for the shared part
+  and writes out the rest.
 
 ## The kitchen
 
@@ -74,6 +90,8 @@ How a recipe card should read, for anyone writing one, person or agent. The form
 - No raw or runny egg on rice: no raw yolk, no onsen egg, no tamago kake gohan. A set egg is fine where it
   earns its place.
 - Mushrooms only where the dish is about them.
+- No shellfish, and no ikura, unless the dish is about them. Where a recipe usually has some, leave it out
+  or offer it as an optional line.
 - Drinks are non-alcoholic, always. Cooking sake and mirin are fine in cooking. Where a dish wants wine,
   the non-alcoholic route is the main one.
 - Something crisp scattered over something soft is a favorite move.
