@@ -24,12 +24,13 @@ const RecipePage = (): React.JSX.Element =>
   }, [ slug ]);
   useDocumentTitle(state.status === 'ready' ? state.recipe.title : 'Recipes');
 
-  // links inside a recipe are plain HTML from the server, so the ones to this site are kept in the app.
+  // links inside a recipe are plain HTML from the server, so the ones to this site are kept in the app. A Link,
+  // like a tag or a timer chip leading to another recipe, has already moved the app by the time its tap gets here.
   const followLink = (event: React.MouseEvent<HTMLElement>): void =>
   {
     const link = (event.target as HTMLElement).closest('a');
     const path = toAppPath(link === null ? null : link.getAttribute('href'));
-    if (path === null || event.metaKey || event.ctrlKey || event.shiftKey)
+    if (event.defaultPrevented || path === null || event.metaKey || event.ctrlKey || event.shiftKey)
     {
       return;
     }
