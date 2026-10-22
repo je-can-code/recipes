@@ -41,31 +41,33 @@ interface CourseGroup
 
 /**
  * The courses the list is split into, in the order they're shown: through the day first, then the dishes
- * that go alongside, then the sweets and the drinks.
+ * that go alongside, then the sweets and the drinks. A course can gather more than one tag: breakfast and
+ * brunch share one, since a cook looking for a morning dish wants both.
  */
 const courses = [
-  { tag: 'breakfast', heading: 'Breakfast' },
-  { tag: 'brunch', heading: 'Brunch' },
-  { tag: 'lunch', heading: 'Lunch' },
-  { tag: 'dinner', heading: 'Dinner' },
-  { tag: 'soup', heading: 'Soups' },
-  { tag: 'salad', heading: 'Salads' },
-  { tag: 'side', heading: 'Sides' },
-  { tag: 'sauce', heading: 'Sauces' },
-  { tag: 'snack', heading: 'Snacks' },
-  { tag: 'baking', heading: 'Baking' },
-  { tag: 'dessert', heading: 'Desserts' },
-  { tag: 'drink', heading: 'Drinks' },
+  { tags: [ 'breakfast', 'brunch' ], heading: 'Breakfast & Brunch' },
+  { tags: [ 'lunch' ], heading: 'Lunch' },
+  { tags: [ 'dinner' ], heading: 'Dinner' },
+  { tags: [ 'soup' ], heading: 'Soups' },
+  { tags: [ 'salad' ], heading: 'Salads' },
+  { tags: [ 'side' ], heading: 'Sides' },
+  { tags: [ 'sauce' ], heading: 'Sauces' },
+  { tags: [ 'snack' ], heading: 'Snacks' },
+  { tags: [ 'baking' ], heading: 'Baking' },
+  { tags: [ 'dessert' ], heading: 'Desserts' },
+  { tags: [ 'drink' ], heading: 'Drinks' },
 ];
 
 /**
  * Which course claims a recipe tagged with more than one, first to last. Each recipe is listed once, so
  * the particular kind of dish wins over the meal it's eaten at: a ramen tagged dinner and soup is found
  * with the soups, a juice tagged breakfast and drink with the drinks, and a tart tagged baking and dessert
- * with the desserts.
+ * with the desserts. A sauce or a bake is usually part of a meal, so those two claim last and give way to
+ * the meal: biscuits tagged baking and brunch are found under Breakfast & Brunch, and a pizza tagged dinner
+ * and baking under Dinner. A bread tagged only baking still has a course of its own.
  */
 const claimOrder = [
-  'drink', 'dessert', 'soup', 'salad', 'sauce', 'baking', 'side', 'breakfast', 'brunch', 'lunch', 'dinner', 'snack',
+  'drink', 'dessert', 'soup', 'salad', 'side', 'breakfast', 'brunch', 'lunch', 'dinner', 'snack', 'baking', 'sauce',
 ];
 
 /**
@@ -311,11 +313,11 @@ const barBackground = (shelves: Shelf[], lit: Shelf[]): string =>
  */
 const groupByCourse = (recipes: RecipeSummary[]): CourseGroup[] =>
 {
-  const sections = [ ...courses, { tag: '', heading: otherHeading } ];
+  const sections = [ ...courses, { tags: [ '' ], heading: otherHeading } ];
   return sections
     .map((section, position) =>
     {
-      const members = recipes.filter((recipe) => courseOf(recipe) === section.tag);
+      const members = recipes.filter((recipe) => section.tags.includes(courseOf(recipe)));
       return { heading: section.heading, hue: hueOf(position), recipes: members };
     })
     .filter((group) => group.recipes.length > 0);

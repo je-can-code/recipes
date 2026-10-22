@@ -215,7 +215,8 @@ const timelyRecipe = (): RecipeDetail =>
     makes: '',
     time: 'about 1 hour',
     intro: '<p>Ready in 30 minutes.</p>',
-    ingredients: [ { name: '', items: [ 'Beef soaked for 5 minutes' ], after: '<p>Rinse it for 1 minute.</p>' } ],
+    scales: false,
+    ingredients: [ { name: '', items: [ 'Beef soaked for 5 minutes' ], keys: [ '' ], after: '<p>Rinse it for 1 minute.</p>' } ],
     method: {
       before: '<p>Start 2 hours ahead.</p>',
       steps: [ { lead: 'Rest 3 minutes.', text: 'Let it rest 3 minutes.' } ],
@@ -263,7 +264,7 @@ describe('withTimers', () =>
         'Rest 3 minutes.',
         'Simmer 6 minutes',
         '<p>Ready in 30 minutes.</p>',
-        [ { name: '', items: [ 'Beef soaked for 5 minutes' ], after: '<p>Rinse it for 1 minute.</p>' } ],
+        [ { name: '', items: [ 'Beef soaked for 5 minutes' ], keys: [ '' ], after: '<p>Rinse it for 1 minute.</p>' } ],
       ]);
   });
 });

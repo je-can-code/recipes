@@ -8,28 +8,29 @@ intro: >-
 
 serves: 2 to 4
 time: about 1 hour 15 minutes
+scales: true
 tags: [ beef, dinner, pork, game, star-ocean, so1, so3 ]
 
 ingredients:
   - name: The bones
     items:
-      - 1 burdock root (gobo), about 1 inch thick at the wide end, from Uwajimaya
+      - 1 burdock root (gobo), about 1 inch thick at the wide end, from Uwajimaya {burdock}
   - name: The meat
     items:
-      - 1 small onion, minced fine
-      - 1 tbsp butter
-      - 1/2 cup panko
-      - 1/4 cup milk
-      - 1 1/2 lb ground meat, half beef and half pork (or all 80/20 beef)
-      - 1 egg
-      - 1 tsp salt
-      - 1/2 tsp black pepper
-      - 1/4 tsp ground nutmeg
+      - 1 small onion, minced fine {onion}
+      - 1 tbsp butter {butter}
+      - 1/2 cup panko {panko}
+      - 1/4 cup milk {milk}
+      - 1 1/2 lb ground meat, half beef and half pork (or all 80/20 beef) {ground-meat}
+      - 1 egg {egg}
+      - 1 tsp salt {salt}
+      - 1/2 tsp black pepper {pepper}
+      - 1/4 tsp ground nutmeg {nutmeg}
       - 12 slices regular bacon (not thick-cut)
   - name: Glaze
     items:
-      - 1/4 cup ketchup
-      - 2 tbsp Worcestershire sauce
+      - 1/4 cup ketchup {ketchup}
+      - 2 tbsp Worcestershire sauce {Worcestershire}
       - 1 tbsp butter
       - 1 tbsp water
 
@@ -41,25 +42,25 @@ method:
         foil.
     - lead: Cook the onion.
       text: >-
-        Melt the butter in the skillet over medium and cook the onion for 5 to 6 minutes, until soft and
+        Melt {butter} in the skillet over medium and cook {onion} for 5 to 6 minutes, until soft and
         golden. Spread it on a plate to cool. Hot onion would start melting the fat in the meat.
     - lead: Make the bones.
       text: >-
-        Scrub the burdock, peel it, and cut four pieces about 7 inches long from the thick end. Keep them in
+        Scrub {burdock}, peel it, and cut {4 pieces} about 7 inches long from the thick end. Keep them in
         a bowl of water until you need them, since cut burdock darkens fast. They're the handles, not
         dinner.
     - lead: Soak the panko.
       text: >-
-        Stir the panko and milk together in a big bowl and let it sit for 5 minutes.
+        Stir {panko} and {milk} together in a big bowl and let it sit for 5 minutes.
     - lead: Mix the meat.
       text: >-
-        Add the ground meat, egg, salt, pepper, nutmeg and the cooled onion. Knead it with one hand for 1 to
-        2 minutes, until it turns pale and sticky and holds together in one mass. That stickiness is what
+        Add {ground-meat}, {egg}, {salt}, {pepper}, {nutmeg} and the cooled onion. Knead it with one hand for
+        1 to 2 minutes, until it turns pale and sticky and holds together in one mass. That stickiness is what
         lets it grip the bone.
     - lead: Shape it around the bones.
       text: >-
-        Divide the meat into four. With wet hands, flatten one portion into an oval about 1 inch thick in
-        your palm. Lay a burdock piece down the middle with 3 inches sticking out one end, then close the
+        Divide the meat into {4 portions}. With wet hands, flatten one portion into an oval about 1 inch thick
+        in your palm. Lay a burdock piece down the middle with 3 inches sticking out one end, then close the
         meat around it into a fat drumstick shape. Pinch the seam shut and toss it from hand to hand a few
         times to push out air pockets, the same as hambagu.
     - lead: Wrap in bacon.
@@ -72,7 +73,8 @@ method:
         toward the middle, next to the bone.
     - lead: Make the glaze.
       text: >-
-        While they roast, simmer the ketchup, Worcestershire, butter and water in a small pot for 1 minute.
+        While they roast, simmer {ketchup}, {Worcestershire}, the butter and the water in a small pot for
+        1 minute.
     - lead: Glaze and finish.
       text: >-
         Brush the glaze all over and roast 5 minutes more, until it's sticky.

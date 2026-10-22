@@ -212,6 +212,26 @@ func TestShowRecipeReturnsTheRenderedPage(t *testing.T) {
 	}
 }
 
+// TestShowRecipeSendsScalingAndKeys covers the two fields batch sizes need: whether the card scales, and
+// each line's key beside it.
+func TestShowRecipeSendsScalingAndKeys(t *testing.T) {
+	// Arrange.
+	card := strings.Replace(gravyCard, "      - 1/4 cup flour", "      - 1/4 cup flour {flour}\n      - Salt", 1)
+	card = strings.Replace(card, "time: about 10 minutes", "time: about 10 minutes\nscales: true", 1)
+	routes := serveFolder(t, map[string]string{"test-gravy.yaml": card, "biscuits.yaml": biscuitsCard})
+
+	// Act.
+	response := request(t, routes, "/api/recipes/test-gravy")
+
+	// Assert.
+	detail := map[string]any{}
+	decode(t, response, &detail)
+	group := detail["ingredients"].([]any)[0].(map[string]any)
+	if detail["scales"] != true || strings.Join([]string{group["keys"].([]any)[0].(string), group["keys"].([]any)[1].(string)}, ",") != "flour," {
+		t.Fatalf("got %s", response.Body.String())
+	}
+}
+
 // TestShowRecipeAnswersAMissingRecipeWith404 covers a name with no recipe behind it.
 func TestShowRecipeAnswersAMissingRecipeWith404(t *testing.T) {
 	// Arrange.

@@ -7,28 +7,29 @@ intro: >-
 
 serves: 6
 time: about 1 hour 30 minutes
+scales: true
 tags: [ vegetarian, soup, game, star-ocean, so1, so5 ]
 
 ingredients:
   - name: Soup
     items:
-      - 3 tbsp olive oil
-      - 1 onion, diced
-      - 2 carrots, diced
-      - 2 celery ribs, diced
-      - 3 cloves garlic, minced
-      - 1 tbsp tomato paste
-      - 1 can (14.5 oz) diced tomatoes
-      - 6 cups vegetable broth
+      - 3 tbsp olive oil {olive-oil}
+      - 1 onion, diced {onion}
+      - 2 carrots, diced {carrots}
+      - 2 celery ribs, diced {celery}
+      - 3 cloves garlic, minced {garlic}
+      - 1 tbsp tomato paste {tomato-paste}
+      - 1 can (14.5 oz each) diced tomatoes {tomatoes}
+      - 6 cups vegetable broth {broth}
       - 1 Parmesan rind, about 3 inches, plus grated Parmesan to serve
       - 1 bay leaf
-      - 1 tsp dried oregano
-      - 1 medium Yukon Gold potato, diced
-      - 1 cup green beans, cut into 1-inch pieces
-      - 1 medium zucchini, diced
-      - 1 can (15 oz) cannellini beans, drained and rinsed
-      - 3 cups chopped kale or Swiss chard, stems removed
-      - 1/2 cup small pasta, like ditalini or small shells
+      - 1 tsp dried oregano {oregano}
+      - 1 medium Yukon Gold potato, diced {potato}
+      - 1 cup green beans, cut into 1-inch pieces {green-beans}
+      - 1 medium zucchini, diced {zucchini}
+      - 1 can (15 oz each) cannellini beans, drained and rinsed {beans}
+      - 3 cups chopped kale or Swiss chard, stems removed {greens}
+      - 1/2 cup small pasta, like ditalini or small shells {pasta}
       - Salt and black pepper
       - Good olive oil, for drizzling
     after: >-
@@ -36,37 +37,37 @@ ingredients:
       on their own, too.
   - name: Crunchy breadcrumbs
     items:
-      - 1 cup panko or coarse dry breadcrumbs
+      - 1 cup panko or coarse dry breadcrumbs {panko}
       - 2 tbsp olive oil
       - 1 clove garlic, grated
       - 1 pinch red pepper flakes
-      - Zest of 1/2 lemon
+      - 1/2 lemon, zested
       - 1 pinch salt
 
 method:
   steps:
     - lead: Cook the base slowly.
       text: >-
-        Heat the olive oil in a big pot over medium. Add the onion, carrot, celery and a pinch of salt and
+        Heat {olive-oil} in a big pot over medium. Add {onion}, {carrots}, {celery} and a pinch of salt and
         cook for 10 to 12 minutes, stirring now and then, until soft and sweet and just starting to color.
         This slow start is where most of the flavor comes from.
     - lead: Add the garlic and tomato paste.
       text: >-
-        Stir them in and cook for 2 minutes, until the paste darkens a shade.
+        Stir in {garlic} and {tomato-paste} and cook for 2 minutes, until the paste darkens a shade.
     - lead: Add the liquids.
       text: >-
-        Add the tomatoes, broth, Parmesan rind, bay leaf, oregano and potato. Bring it to a boil with the
-        lid on, then simmer with the lid ajar for 15 minutes.
+        Add {tomatoes}, {broth}, the Parmesan rind, the bay leaf, {oregano} and {potato}. Bring it to a boil
+        with the lid on, then simmer with the lid ajar for 15 minutes.
     - lead: Add the green beans, zucchini and beans.
       text: >-
-        Simmer for 10 minutes more.
+        Add {green-beans}, {zucchini} and {beans}, and simmer for 10 minutes more.
     - lead: Add the pasta and greens.
       text: >-
-        Stir them in and simmer for 10 to 12 minutes, stirring now and then so the pasta doesn't stick,
-        until the pasta is tender. If it gets too thick, add a cup of water.
+        Stir in {pasta} and {greens} and simmer for 10 to 12 minutes, stirring now and then so the pasta
+        doesn't stick, until the pasta is tender. If it gets too thick, add water a splash at a time.
     - lead: Toast the breadcrumbs.
       text: >-
-        While the pasta cooks, heat the 2 tbsp olive oil in the skillet over medium. Add the panko and stir
+        While the pasta cooks, heat the {2 tbsp} olive oil in the skillet over medium. Add {panko} and stir
         constantly for 3 to 5 minutes, until it's golden and crisp. Take it off the heat, stir in the
         garlic, pepper flakes, lemon zest and salt, and tip it into a bowl so it stops cooking.
     - lead: Season and serve.

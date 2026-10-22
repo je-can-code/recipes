@@ -6,34 +6,35 @@ intro: >-
 
 makes: about 9 cups, 8 to 10 glasses
 time: about 10 minutes, plus chilling
+scales: true
 tags: [ drink, game, star-ocean, so1 ]
 
 ingredients:
   - items:
-      - 3 cups pineapple juice, chilled
-      - 2 cups orange juice, chilled
-      - 1 cup mango or guava nectar, chilled
-      - 1/4 cup lime juice (about 2 limes)
-      - 2 tbsp grenadine, optional, for a redder punch
-      - 3 cups soda water or ginger ale, chilled
-      - 1 orange and 1 lime, sliced into thin rounds
-      - 1 cup strawberries, hulled and halved, or pineapple chunks
+      - 3 cups pineapple juice, chilled {pineapple-juice}
+      - 2 cups orange juice, chilled {orange-juice}
+      - 1 cup mango or guava nectar, chilled {nectar}
+      - 1/4 cup lime juice (about 2 limes) {lime-juice}
+      - 2 tbsp grenadine, optional, for a redder punch {grenadine}
+      - 3 cups soda water or ginger ale, chilled {soda}
+      - 1 orange, sliced into thin rounds
+      - 1 lime, sliced into thin rounds
+      - 1 cup strawberries, hulled and halved, or pineapple chunks {strawberries}
       - Ice
 
 method:
   steps:
     - lead: Mix the juices.
       text: >-
-        Stir the pineapple juice, orange juice, nectar, lime juice and grenadine together in a big pitcher
-        or bowl. Taste it: another squeeze of lime makes it brighter. Keep it in the fridge until serving.
-        It holds for a day.
+        Stir {pineapple-juice}, {orange-juice}, {nectar}, {lime-juice} and {grenadine} together in a big
+        pitcher or bowl. Taste it: another squeeze of lime makes it brighter. Keep it in the fridge until
+        serving. It holds for a day.
     - lead: Add the fruit.
       text: >-
-        Drop in the orange and lime rounds and the strawberries.
+        Drop in the orange and lime rounds and {strawberries}.
     - lead: Add the fizz at the last minute.
       text: >-
-        Right before serving, pour in the soda water or ginger ale and stir once, gently, to keep the
-        bubbles.
+        Right before serving, pour in {soda} and stir once, gently, to keep the bubbles.
     - lead: Serve.
       text: >-
         Pour it over ice, with a few pieces of fruit in each glass.

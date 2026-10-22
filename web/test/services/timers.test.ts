@@ -20,7 +20,7 @@ import { hour, lockedStorage, memoryStorage, noon } from '../helpers/storage';
  */
 const timerEnding = (id: string, endsAt: number): Timer =>
 {
-  return { id, name: 'Simmer the vegetables.', label: '8 to 10 minutes', endsAt };
+  return { id, slug: 'test-stew', title: 'Test Stew', name: 'Simmer the vegetables.', label: '8 to 10 minutes', endsAt };
 };
 
 /*
@@ -35,13 +35,13 @@ describe('startTimer', () =>
     const running = [ timerEnding('earlier', noon + hour) ];
 
     // Act.
-    const timers = startTimer(running, 'Boil the mochi.', '3 to 5 minutes', 180, noon);
+    const timers = startTimer(running, { slug: 'test-mochi', title: 'Test Mochi' }, 'Boil the mochi.', '3 to 5 minutes', 180, noon);
 
     // Assert.
     expect(timers)
       .toEqual([
         timerEnding('earlier', noon + hour),
-        { id: `${noon}-1`, name: 'Boil the mochi.', label: '3 to 5 minutes', endsAt: noon + 180000 },
+        { id: `${noon}-1`, slug: 'test-mochi', title: 'Test Mochi', name: 'Boil the mochi.', label: '3 to 5 minutes', endsAt: noon + 180000 },
       ]);
   });
 });
@@ -191,9 +191,9 @@ describe('formatClock', () =>
 });
 
 /*
- * loadTimers owes a cook who left the page the timers they left running, and the ones that rang while they
- * were gone, but not one that rang so long ago it's no news anymore. Anything unreadable is no timers, never
- * a broken page.
+ * loadTimers owes a cook who left the page the timers they left running on any recipe, and the ones that rang
+ * while they were gone, but not one that rang so long ago it's no news anymore. Anything unreadable is no
+ * timers, never a broken page.
  */
 describe('loadTimers', () =>
 {
@@ -203,7 +203,7 @@ describe('loadTimers', () =>
     const storage = memoryStorage();
 
     // Act.
-    const timers = loadTimers(storage, 'test-stew', noon);
+    const timers = loadTimers(storage, noon);
 
     // Assert.
     expect(timers)
@@ -216,23 +216,37 @@ describe('loadTimers', () =>
     const running = timerEnding('running', noon + 60000);
     const recent = timerEnding('recent', noon - hour);
     const old = timerEnding('old', noon - hour - 1);
-    const storage = memoryStorage({ 'recipes.timers.test-stew': JSON.stringify([ running, recent, old ]) });
+    const storage = memoryStorage({ 'recipes.timers': JSON.stringify([ running, recent, old ]) });
 
     // Act.
-    const timers = loadTimers(storage, 'test-stew', noon);
+    const timers = loadTimers(storage, noon);
 
     // Assert.
     expect(timers)
       .toEqual([ running, recent ]);
   });
 
+  it('forgets a timer that names no recipe, since its chip would lead nowhere', () =>
+  {
+    // Arrange- a near-miss beside it that does name one, and has to survive.
+    const nameless = { id: 'nameless', name: 'Simmer.', label: '5 minutes', endsAt: noon + 60000 };
+    const storage = memoryStorage({ 'recipes.timers': JSON.stringify([ nameless, timerEnding('named', noon + 60000) ]) });
+
+    // Act.
+    const timers = loadTimers(storage, noon);
+
+    // Assert.
+    expect(timers)
+      .toEqual([ timerEnding('named', noon + 60000) ]);
+  });
+
   it('finds no timers when what\'s saved isn\'t a list', () =>
   {
     // Arrange.
-    const storage = memoryStorage({ 'recipes.timers.test-stew': JSON.stringify({ endsAt: noon }) });
+    const storage = memoryStorage({ 'recipes.timers': JSON.stringify({ endsAt: noon }) });
 
     // Act.
-    const timers = loadTimers(storage, 'test-stew', noon);
+    const timers = loadTimers(storage, noon);
 
     // Assert.
     expect(timers)
@@ -242,10 +256,10 @@ describe('loadTimers', () =>
   it('finds no timers when what\'s saved isn\'t JSON', () =>
   {
     // Arrange.
-    const storage = memoryStorage({ 'recipes.timers.test-stew': '[ not json' });
+    const storage = memoryStorage({ 'recipes.timers': '[ not json' });
 
     // Act.
-    const timers = loadTimers(storage, 'test-stew', noon);
+    const timers = loadTimers(storage, noon);
 
     // Assert.
     expect(timers)
@@ -258,7 +272,7 @@ describe('loadTimers', () =>
     const storage = lockedStorage();
 
     // Act.
-    const timers = loadTimers(storage, 'test-stew', noon);
+    const timers = loadTimers(storage, noon);
 
     // Assert.
     expect(timers)
@@ -269,7 +283,8 @@ describe('loadTimers', () =>
 });
 
 /*
- * saveTimers owes the next visit this one's timers, and owes a recipe with none left no entry at all.
+ * saveTimers owes the next visit every timer this one left running, on any recipe, and owes the site no
+ * entry at all once none are left.
  */
 describe('saveTimers', () =>
 {
@@ -279,27 +294,27 @@ describe('saveTimers', () =>
     const storage = memoryStorage();
 
     // Act.
-    saveTimers(storage, 'test-stew', [ timerEnding('soup', noon) ]);
+    saveTimers(storage,[ timerEnding('soup', noon) ]);
 
     // Assert.
-    expect(JSON.parse(storage.items.get('recipes.timers.test-stew') ?? 'null'))
+    expect(JSON.parse(storage.items.get('recipes.timers') ?? 'null'))
       .toEqual([ timerEnding('soup', noon) ]);
   });
 
-  it('removes the entry once no timers are left, leaving other recipes\' entries', () =>
+  it('removes the entry once no timers are left, leaving everything else', () =>
   {
     // Arrange.
     const storage = memoryStorage({
-      'recipes.timers.test-stew': JSON.stringify([ timerEnding('soup', noon) ]),
-      'recipes.timers.test-soup': JSON.stringify([ timerEnding('soup', noon) ]),
+      'recipes.timers': JSON.stringify([ timerEnding('soup', noon) ]),
+      'recipes.progress.test-stew': '{}',
     });
 
     // Act.
-    saveTimers(storage, 'test-stew', []);
+    saveTimers(storage, []);
 
     // Assert.
     expect([ ...storage.items.keys() ])
-      .toEqual([ 'recipes.timers.test-soup' ]);
+      .toEqual([ 'recipes.progress.test-stew' ]);
   });
 
   it('carries on when the browser won\'t write to storage', () =>
@@ -308,7 +323,7 @@ describe('saveTimers', () =>
     const storage = lockedStorage();
 
     // Act.
-    saveTimers(storage, 'test-stew', [ timerEnding('soup', noon) ]);
+    saveTimers(storage,[ timerEnding('soup', noon) ]);
 
     // Assert- it tried, and the refusal stopped there.
     expect(storage.attempts)

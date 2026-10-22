@@ -55,12 +55,14 @@ interface RecipeEntry
 }
 
 /**
- * One group of ingredients. The name is plain text; the items and the closing paragraph are HTML.
+ * One group of ingredients. The name is plain text; the items and the closing paragraph are HTML. Keys runs
+ * alongside the items: each line's key, which steps point at as {key}, or '' for a line without one.
  */
 interface RecipeGroup
 {
   name: string;
   items: string[];
+  keys: string[];
   after: string;
 }
 
@@ -75,11 +77,12 @@ interface RecipeMethod
 }
 
 /**
- * One recipe, everything its page shows.
+ * One recipe, everything its page shows. Scales says the card is written for other batch sizes.
  */
 interface RecipeDetail extends RecipeSummary
 {
   intro: string;
+  scales: boolean;
   ingredients: RecipeGroup[];
   method: RecipeMethod;
   notes: RecipeEntry[];

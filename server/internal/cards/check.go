@@ -79,7 +79,8 @@ func describeComplaint(complaint string, shape string) string {
 }
 
 // checkCard applies the rules decoding can't: the fields every card needs, exactly one of serves or
-// makes, and no empty lists or blank entries. It returns one message per broken rule.
+// makes, no empty lists or blank entries, and the rules for keys and braces in measures.go. It returns one
+// message per broken rule.
 func checkCard(card Card) []string {
 	messages := []string{}
 
@@ -114,6 +115,7 @@ func checkCard(card Card) []string {
 	messages = append(messages, checkIngredients(card.Ingredients)...)
 	messages = append(messages, checkMethod(card.Method)...)
 	messages = append(messages, checkEntries("Note", card.Notes)...)
+	messages = append(messages, checkMeasures(card)...)
 	return messages
 }
 

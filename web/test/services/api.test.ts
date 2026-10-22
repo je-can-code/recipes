@@ -79,14 +79,23 @@ describe('fetchCatalog', () =>
 
 /*
  * fetchRecipe owes the recipe page one recipe, or null when there is no recipe by that name, which is a
- * page to show rather than an error to report.
+ * page to show rather than an error to report. A recipe saved by an older build owes the page the two
+ * fields it lacks, as a card that doesn't scale and lines without keys.
  */
 describe('fetchRecipe', () =>
 {
   it('returns the recipe the server sent, asking for it by name', () =>
   {
     // Arrange.
-    const recipe = { slug: 'chimichurri', title: 'Chimichurri' };
+    const recipe = {
+      slug: 'chimichurri',
+      title: 'Chimichurri',
+      intro: '<p>A sauce.</p>',
+      scales: true,
+      ingredients: [ { name: '', items: [ '1 cup parsley' ], keys: [ 'parsley' ], after: '' } ],
+      method: { before: '', steps: [], after: '' },
+      notes: [],
+    };
     const requested = answerWith(200, recipe);
 
     // Act.
@@ -117,6 +126,30 @@ describe('fetchRecipe', () =>
         .toBeNull();
       expect(requested)
         .toEqual([ '/api/recipes/a%20b' ]);
+    });
+  });
+
+  it('treats a recipe saved by an older build as one that doesn\'t scale, with no keys', () =>
+  {
+    // Arrange- the shape the previous build saved, without scales or keys.
+    const saved = {
+      slug: 'test-gravy',
+      title: 'Test Gravy',
+      intro: '<p>A gravy.</p>',
+      ingredients: [ { name: '', items: [ '1/4 cup flour', '2 cups milk' ], after: '' } ],
+      method: { before: '', steps: [], after: '' },
+      notes: [],
+    };
+    answerWith(200, saved);
+
+    // Act.
+    const result = fetchRecipe('test-gravy');
+
+    // Assert.
+    return result.then((received) =>
+    {
+      expect(received)
+        .toEqual({ ...saved, scales: false, ingredients: [ { ...saved.ingredients[0], keys: [ '', '' ] } ] });
     });
   });
 });

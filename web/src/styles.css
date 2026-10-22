@@ -648,6 +648,64 @@ a
   font-weight: 600;
 }
 
+/* the batch size and the measuring system: pill buttons in a row, the chosen one filled. */
+.measure-bar
+{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.measure-choices
+{
+  display: inline-flex;
+  padding: 0.15rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.measure-choices button
+{
+  min-width: 2.5rem;
+  padding: 0.3rem 0.55rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  touch-action: manipulation;
+}
+
+.measure-choices button[aria-pressed="true"]
+{
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.measure-choices button:disabled
+{
+  cursor: default;
+  opacity: 0.35;
+}
+
+/* an amount the page worked out, and the amount a step points at, stand out a little from the words. */
+.measured,
+.amount,
+.ref-amount
+{
+  font-weight: 700;
+}
+
+.ref-amount
+{
+  color: var(--muted);
+}
+
 .tags
 {
   display: flex;
@@ -1159,6 +1217,30 @@ html:has(.quest)
   opacity: 0.85;
 }
 
+/* a chip's words: one line, or another recipe's title over its step, each trimmed on its own. */
+.timer-chip-label
+{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.timer-chip-label-stacked
+{
+  line-height: 1.15;
+}
+
+.timer-chip-label-stacked .timer-chip-name:first-child
+{
+  font-weight: 700;
+  opacity: 1;
+}
+
+.timer-chip-label-stacked .timer-chip-name:last-child
+{
+  font-size: 0.75rem;
+}
+
 .timer-chip-armed
 {
   background: var(--danger-text);
@@ -1178,6 +1260,25 @@ html:has(.quest)
   {
     transform: scale(1.07);
   }
+}
+
+/* a chip that leads to another recipe is a link, so it drops a link's underline, and it's a little wider for
+   its two lines. */
+a.timer-chip
+{
+  max-width: 16rem;
+  text-decoration: none;
+}
+
+/* the dock: the running timers, off a recipe's page, where the quest tracker would be. */
+.timer-dock .quest-timers
+{
+  margin: 0;
+}
+
+html:has(.timer-dock) main
+{
+  padding-bottom: 5rem;
 }
 
 /* confetti flies over everything, and never gets in the way of a tap. */

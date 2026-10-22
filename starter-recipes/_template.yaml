@@ -25,6 +25,12 @@ serves: 2
 # Required. The way a person would say it.
 time: about 30 minutes
 
+# Optional. true when the card is written for other batch sizes, from a quarter to four times: every amount
+# its steps, notes and paragraphs name is in braces or points at an ingredient, or says it's per piece, like
+# "1/3 cup of rice per ball". Leave it out for anything a pan decides, like a cake, a pie or a loaf, and for
+# rice cooked in a pot by absorption. The check holds a card that says it to that.
+scales: true
+
 # Optional. Words to find the recipe by, like beef, brunch or so2. Search looks at these, the title, and
 # the name of the folder the card sits in. A tag listed in _collections.yaml also puts the recipe on that
 # collection's shelf.
@@ -32,23 +38,35 @@ tags: [ brunch, pork ]
 
 # Required. A list of groups. Each has items, plus an optional name and an optional paragraph after
 # the list. A recipe with one plain list has a single group with no name.
+#
+# End a line with a key in braces when a step or note points at it, like {something} below. A key is words
+# joined by hyphens, and reads after "the" on the page: {olive-oil} is "the olive oil". On a card that
+# scales, start each line with its amount so the page can scale it ("1 lemon, juiced", not "Juice of 1
+# lemon"), put the thing counted right after a count ("2 chicken thighs, boneless"), and say "each" for a
+# package's size: "1 can (14.5 oz each) diced tomatoes".
 ingredients:
   - name: Sauce
     items:
-      - 1 cup something, the way a person would write it
+      - 1 cup something, the way a person would write it {something}
       - Salt, to taste
     after: >-
       A paragraph under this group's list, like a substitution.
 
 # Required. The steps in order, each with a short bold lead the cook can find at a glance. Before and
 # after are optional.
+#
+# In a step, a note or a paragraph, point at an ingredient by its key, {something}, and the page shows how
+# much at whatever batch size the cook picked. A share works too: {half something}, {third something},
+# {quarter something}, {eighth something}, {double something}, {rest something}, or a fraction like
+# {2/3 something}. Any other amount that grows with the recipe goes in braces as well, like {2 tbsp} or
+# {about 2/3 cup}. Leads and the intro never take braces.
 method:
   before: >-
     Anything to read before step 1, like how the timing works.
   steps:
     - lead: Do the first thing.
       text: >-
-        The rest of the step.
+        The rest of the step, with {half something}.
   after: |-
     Anything after the last step. A table needs |- instead of >- so its rows stay on separate lines.
 

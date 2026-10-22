@@ -1,16 +1,17 @@
 import { useArmed } from '../hooks/useArmed';
 import { currentStep, isComplete, isStarted } from '../services/progress';
 import type { Progress } from '../services/progress';
-import { questDetail, questLabel, questPercent, restartLabel, timerChipText } from '../services/quest';
-import { byUrgency, isRinging } from '../services/timers';
+import { questDetail, questLabel, questPercent, restartLabel } from '../services/quest';
 import type { Timer } from '../services/timers';
 import { Icon } from './Icons';
+import { TimerChips } from './TimerChips';
 
 /**
  * Everything the tracker shows, and what its buttons do.
  */
 interface QuestTrackerProps
 {
+  slug: string;
   stepLeads: string[];
   ingredientCount: number;
   progress: Progress;
@@ -24,8 +25,9 @@ interface QuestTrackerProps
 
 /**
  * The quest tracker pinned to the bottom of a recipe: which step is next, a rainbow bar that fills as steps
- * get done, the running timers, and a way to start over. Tapping the objective scrolls to that step. The
- * buttons that throw something away, stopping a running timer or starting over midway, take a second tap.
+ * get done, every running timer, from this recipe or any other, and a way to start over. Tapping the
+ * objective scrolls to that step. The buttons that throw something away, stopping a running timer or
+ * starting over midway, take a second tap.
  * @param {QuestTrackerProps} props What to show, and what the buttons do.
  * @returns {React.JSX.Element} The tracker.
  */
@@ -40,37 +42,7 @@ const QuestTracker = (props: QuestTrackerProps): React.JSX.Element =>
     <aside className={isFinished ? 'quest quest-complete' : 'quest'} aria-label="Quest tracker">
       <div className="quest-inner">
         {timers.length > 0 && (
-          <ul className="quest-timers">
-            {byUrgency(timers).map((timer) =>
-            {
-              const isRingingNow = isRinging(timer, now);
-              const isArmed = armed === timer.id;
-              return (
-                <li key={timer.id}>
-                  <button
-                    type="button"
-                    className={timerChipClass(isRingingNow, isArmed)}
-                    aria-label={isRingingNow ? `Dismiss the ${timer.label} timer` : `Stop the ${timer.label} timer`}
-                    onClick={() =>
-                    {
-                      // a ringing timer goes on the first tap; a running one asks first.
-                      if (isRingingNow || isArmed)
-                      {
-                        props.onStopTimer(timer.id);
-                        return;
-                      }
-                      arm(timer.id);
-                    }}
-                  >
-                    <Icon name="clock" />
-                    <span className="timer-chip-clock">{timerChipText(timer, now, isArmed)}</span>
-                    <span className="timer-chip-name">{timer.name}</span>
-                    <Icon name="close" />
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          <TimerChips timers={timers} now={now} slug={props.slug} armed={armed} onArm={arm} onStop={props.onStopTimer} />
         )}
 
         <div className="quest-row">
@@ -121,21 +93,6 @@ const QuestTracker = (props: QuestTrackerProps): React.JSX.Element =>
       </div>
     </aside>
   );
-};
-
-/**
- * The classes for a timer's chip, which change while it rings or waits for a second tap.
- * @param {boolean} isRingingNow Whether it's ringing.
- * @param {boolean} isArmed Whether it's waiting for a second tap.
- * @returns {string} The classes.
- */
-const timerChipClass = (isRingingNow: boolean, isArmed: boolean): string =>
-{
-  if (isRingingNow)
-  {
-    return 'timer-chip timer-chip-ringing';
-  }
-  return isArmed ? 'timer-chip timer-chip-armed' : 'timer-chip';
 };
 
 export { QuestTracker };

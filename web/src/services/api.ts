@@ -24,7 +24,26 @@ const fetchRecipe = async (slug: string): Promise<RecipeDetail | null> =>
   {
     return null;
   }
-  return readJson<RecipeDetail>(response);
+  return withMeasureFields(await readJson<RecipeDetail>(response));
+};
+
+/**
+ * Fills in the two fields a recipe saved by an older build doesn't have, since the service worker can answer
+ * with one while the desktop is out of reach: a card without scales doesn't scale, and a line without a key
+ * has the empty one.
+ * @param {RecipeDetail} recipe The recipe as it arrived.
+ * @returns {RecipeDetail} The recipe with both fields present.
+ */
+const withMeasureFields = (recipe: RecipeDetail): RecipeDetail =>
+{
+  return {
+    ...recipe,
+    scales: recipe.scales === true,
+    ingredients: recipe.ingredients.map((group) =>
+    {
+      return { ...group, keys: Array.isArray(group.keys) ? group.keys : group.items.map(() => '') };
+    }),
+  };
 };
 
 /**

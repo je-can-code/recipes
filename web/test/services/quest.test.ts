@@ -6,6 +6,7 @@ import {
   questLabel,
   questPercent,
   restartLabel,
+  timerChipLines,
   timerChipText,
 } from '../../src/services/quest';
 import { emptyProgress } from '../../src/services/progress';
@@ -25,9 +26,9 @@ describe('countIngredients', () =>
   {
     // Arrange.
     const groups = [
-      { name: 'Broth', items: [ 'water', 'kombu', 'bonito' ], after: '' },
-      { name: '', items: [], after: '' },
-      { name: 'Bowls', items: [ 'oysters', 'mochi' ], after: '' },
+      { name: 'Broth', items: [ 'water', 'kombu', 'bonito' ], keys: [ '', '', '' ], after: '' },
+      { name: '', items: [], keys: [], after: '' },
+      { name: 'Bowls', items: [ 'oysters', 'mochi' ], keys: [ '', '' ], after: '' },
     ];
 
     // Act.
@@ -275,7 +276,7 @@ describe('timerChipText', () =>
   it('says it\'s done once it rings, even while armed', () =>
   {
     // Arrange.
-    const timer = { id: 'soup', name: 'Simmer.', label: '5 minutes', endsAt: noon };
+    const timer = { id: 'soup', slug: 'test-stew', title: 'Test Stew', name: 'Simmer.', label: '5 minutes', endsAt: noon };
 
     // Act.
     const text = timerChipText(timer, noon, true);
@@ -288,7 +289,7 @@ describe('timerChipText', () =>
   it('asks before stopping a running timer', () =>
   {
     // Arrange.
-    const timer = { id: 'soup', name: 'Simmer.', label: '5 minutes', endsAt: noon + 60000 };
+    const timer = { id: 'soup', slug: 'test-stew', title: 'Test Stew', name: 'Simmer.', label: '5 minutes', endsAt: noon + 60000 };
 
     // Act.
     const text = timerChipText(timer, noon, true);
@@ -301,7 +302,7 @@ describe('timerChipText', () =>
   it('shows the time left', () =>
   {
     // Arrange.
-    const timer = { id: 'soup', name: 'Simmer.', label: '5 minutes', endsAt: noon + 272500 };
+    const timer = { id: 'soup', slug: 'test-stew', title: 'Test Stew', name: 'Simmer.', label: '5 minutes', endsAt: noon + 272500 };
 
     // Act.
     const text = timerChipText(timer, noon, false);
@@ -309,5 +310,38 @@ describe('timerChipText', () =>
     // Assert.
     expect(text)
       .toBe('4:33');
+  });
+});
+
+/*
+ * timerChipLines owes a chip on its own recipe the step it's for, and owes a chip anywhere else the recipe
+ * it came from as well, on a line of its own above the step.
+ */
+describe('timerChipLines', () =>
+{
+  it('names a timer by its step on its own recipe\'s page', () =>
+  {
+    // Arrange.
+    const timer = { id: 'soup', slug: 'test-stew', title: 'Test Stew', name: 'Simmer.', label: '5 minutes', endsAt: noon };
+
+    // Act.
+    const lines = timerChipLines(timer, 'test-stew');
+
+    // Assert.
+    expect(lines)
+      .toEqual([ 'Simmer.' ]);
+  });
+
+  it('puts the recipe\'s title on a line above anywhere else', () =>
+  {
+    // Arrange.
+    const timer = { id: 'soup', slug: 'test-stew', title: 'Test Stew', name: 'Simmer.', label: '5 minutes', endsAt: noon };
+
+    // Act.
+    const lines = timerChipLines(timer, '');
+
+    // Assert.
+    expect(lines)
+      .toEqual([ 'Test Stew', 'Simmer.' ]);
   });
 });

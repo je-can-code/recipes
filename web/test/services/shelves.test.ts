@@ -680,7 +680,24 @@ describe('groupByCourse', () =>
 
     // Assert.
     expect(groups.map((group) => group.heading))
-      .toEqual([ 'Breakfast', 'Dinner', 'Drinks' ]);
+      .toEqual([ 'Breakfast & Brunch', 'Dinner', 'Drinks' ]);
+  });
+
+  it('gathers breakfast and brunch on one course', () =>
+  {
+    // Arrange- a lunch beside them, which has to keep a course of its own.
+    const recipes = [
+      recipe('pancakes', '', [ 'breakfast' ]),
+      recipe('chorizo-gravy', '', [ 'brunch' ]),
+      recipe('kids-meal', '', [ 'lunch' ]),
+    ];
+
+    // Act.
+    const groups = groupByCourse(recipes);
+
+    // Assert.
+    expect(groups.map((group) => [ group.heading, slugsOf(group.recipes) ]))
+      .toEqual([ [ 'Breakfast & Brunch', [ 'pancakes', 'chorizo-gravy' ] ], [ 'Lunch', [ 'kids-meal' ] ] ]);
   });
 
   it('lists a recipe with two courses once, under the one that claims it', () =>
@@ -704,6 +721,30 @@ describe('groupByCourse', () =>
         [ 'Soups', [ 'ultimate-ramen' ] ],
         [ 'Desserts', [ 'lemon-tart' ] ],
         [ 'Drinks', [ 'carrot-juice', 'milk-shake' ] ],
+      ]);
+  });
+
+  it('lets a sauce or a bake give way to the meal it\'s part of', () =>
+  {
+    // Arrange- a bake and a sauce with a meal each, and a bread and a sauce with none to give way to.
+    const recipes = [
+      recipe('flaky-biscuits', '', [ 'baking', 'brunch' ]),
+      recipe('cheese-pizza', '', [ 'baking', 'dinner' ]),
+      recipe('focaccia', '', [ 'baking' ]),
+      recipe('chorizo-gravy', '', [ 'brunch', 'sauce' ]),
+      recipe('chimichurri', '', [ 'sauce' ]),
+    ];
+
+    // Act.
+    const groups = groupByCourse(recipes);
+
+    // Assert.
+    expect(groups.map((group) => [ group.heading, slugsOf(group.recipes) ]))
+      .toEqual([
+        [ 'Breakfast & Brunch', [ 'flaky-biscuits', 'chorizo-gravy' ] ],
+        [ 'Dinner', [ 'cheese-pizza' ] ],
+        [ 'Sauces', [ 'chimichurri' ] ],
+        [ 'Baking', [ 'focaccia' ] ],
       ]);
   });
 
@@ -735,7 +776,7 @@ describe('groupByCourse', () =>
 
   it('keeps each course\'s color from its place on the whole menu', () =>
   {
-    // Arrange- Dinner is fourth on the menu and Everything else thirteenth, though here they're first and second.
+    // Arrange- Dinner is third on the menu and Everything else twelfth, though here they're first and second.
     const recipes = [ recipe('sukiyaki', '', [ 'dinner' ]), recipe('mystery-meat', '', [ 'beef' ]) ];
 
     // Act.
@@ -743,7 +784,7 @@ describe('groupByCourse', () =>
 
     // Assert.
     expect(groups.map((group) => [ group.heading, group.hue ]))
-      .toEqual([ [ 'Dinner', 3 ], [ 'Everything else', 5 ] ]);
+      .toEqual([ [ 'Dinner', 2 ], [ 'Everything else', 4 ] ]);
   });
 
   it('makes no groups when there are no recipes', () =>
@@ -762,7 +803,7 @@ describe('groupByCourse', () =>
   it('gives every course a place in the claim order, and nothing else', () =>
   {
     // Arrange- a course missing from the claim order could never claim a recipe.
-    const shown = courses.map((course) => course.tag);
+    const shown = courses.flatMap((course) => course.tags);
 
     // Act.
     const sortedShown = [ ...shown ].sort();

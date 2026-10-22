@@ -70,6 +70,49 @@ How a recipe card should read, for anyone writing one, person or agent. The form
 - A dish built on another, like a bun filled with a game's curry, links to that card for the shared part
   and writes out the rest.
 
+## A card that scales
+
+The page can make a recipe from a quarter to four times as big, and show every amount in US or metric
+measures. It can only scale what it can see, so a card that scales keeps its amounts where the page looks.
+
+- Say `scales: true` once the card is written this way. Leave it out for anything a pan or a mold decides,
+  like a cake, a pie, a tart or a loaf, and for rice cooked in a pot by absorption, like a pilaf. Cookies,
+  buns, skewers and anything else made by the piece scale fine, since each piece stays the same size. Rice
+  in a rice cooker scales too, since the cooker has a line for each amount: write it as
+  `{2 rice cooker cups}`, so metric keeps the cooker's cups.
+- Amounts live in the ingredients. Start each line with its amount ("1 lemon, juiced", not "Juice of 1
+  lemon"), put the counted thing right after a count ("2 chicken thighs, boneless and skinless"), give each
+  amount its own line ("1 tbsp butter" and "1 tbsp neutral oil", not both on one), and write a package's size
+  with "each": "1 can (14.5 oz each) diced tomatoes". A length never scales, so a line that would lead with
+  one leads with a count of pieces instead: "1 piece ginger, 2 inches long".
+- Give a key to each ingredient a step or note points at: `3 cups water {water}`. Name it the way it reads
+  after "the": `{olive-oil}` is "the olive oil", and `{Sichuan-pepper}` keeps its capital.
+- Point at an ingredient where a step adds or measures it: "Pour in {sake}, then {water}." The page shows
+  "the sake (1 tbsp)", so a pointer brings its own "the": never write "the {sake}". Later mentions in the
+  same step are plain words. A share does the math for the cook:
+  `{half water}`, `{third water}`, `{quarter water}`, `{eighth water}`, `{double water}`, `{rest water}`, or a
+  fraction like `{2/3 water}`.
+- Put any other amount that grows with the recipe in braces: a yield ("about {2/3 cup} of puree"), a part set
+  aside ("set {2 tbsp} of it aside"), a seasoning check ("it usually wants about {1 tsp} salt"), a count of
+  pieces ("divide it into {4 portions}"), and a note's swap ("use {1 lb} thinly sliced pork"). A range in
+  braces says "to", like `{1 to 2 tbsp}`, and every fraction is a kitchen one, in halves, thirds, quarters,
+  eighths or sixteenths. Plates, bowls and glasses become "the plates, one per person".
+- Leave an amount that's per piece plain, and say so in its sentence: "about 1/3 cup of rice per ball", "add
+  water 1 tbsp at a time", "beat 3 eggs for each omelet". The check lets "per", "each", "apiece" and "at a
+  time" through, for the whole sentence, so keep a per-piece sentence to the per-piece amount.
+- Amounts in an ingredient line's parentheses grow with the batch, unless the parentheses say "each", "per" or
+  "apiece", or give a percent: "(about 2 limes)" doubles, while "(14.5 oz each)", "(16 to 20 per lb)" and
+  "(60 to 70% cacao)" stay put.
+- Some lines stay the same at any size, and they name the thing first so the page leaves their amount alone:
+  oil for frying, since the pot and the depth decide it ("Neutral oil for frying, 6 to 8 cups, enough for 2
+  inches in your pot"), and each line of a group for one glass or one mug ("Syrup, 1/4 cup"), whose steps say
+  "each glass" while the syrup itself scales. Gear counts go in words: "Two small pots".
+- Write a pan's or a cut's size with a hyphen, so it never reads as an amount: "a 6-quart pot", "a 12-inch
+  skillet", "1/2-inch cubes".
+- Times stay as they are. Heat soaks in by thickness, not by how much is in the pan, so a bigger batch cooks
+  for about the same time, and a step's cues ("until it coats a spoon") carry the rest.
+- No braces in a lead or the intro; the page shows those as they are.
+
 ## The kitchen
 
 - A glass electric flattop. No cast iron; the elements cycle and lag behind the dial, and water is slow to

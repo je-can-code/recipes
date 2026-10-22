@@ -1,22 +1,31 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import type { MeasureSystem } from '../services/amounts';
 import { withTimers } from '../services/durations';
+import { withMeasures } from '../services/measures';
+import type { Measure, Stop } from '../services/measures';
 import { currentStep } from '../services/progress';
 import type { Progress } from '../services/progress';
 import { homeAddress } from '../services/shelves';
 import type { RecipeDetail, RecipeEntry } from '../types';
 import { Icon } from './Icons';
+import { MeasureBar } from './MeasureBar';
 
 /**
- * The recipe to show, how far along it is, and what a tap on an ingredient, a step or a time does.
+ * The recipe to show, how far along it is, the batch size and measuring system it's shown at, and what a tap
+ * on an ingredient, a step, a time or a measure does.
  */
 interface RecipeArticleProps
 {
   recipe: RecipeDetail;
   progress: Progress;
+  measure: Measure;
+  stops: Stop[];
   onCheckIngredient: (id: string) => void;
   onCheckStep: (index: number) => void;
   onStartTimer: (name: string, label: string, seconds: number) => void;
+  onChooseFactor: (factor: number) => void;
+  onChooseSystem: (system: MeasureSystem) => void;
 }
 
 /**
@@ -24,27 +33,30 @@ interface RecipeArticleProps
  * ingredients, the numbered steps with their bold leads, and the notes. On a wide screen like a tablet,
  * the ingredients sit in a column beside the steps and stay put while the steps scroll. Tapping an
  * ingredient or a step checks it off, the next step to do is highlighted, and every time in the method
- * is a button that starts a timer. Every text field arrives as HTML the server rendered from the card, so
- * it goes in as HTML rather than being escaped.
+ * is a button that starts a timer. Under the serving line, the batch size and the measuring system rewrite
+ * every amount on the page, the steps' pointers included. Every text field arrives as HTML the server
+ * rendered from the card, so it goes in as HTML rather than being escaped.
  * @param {RecipeArticleProps} props The recipe, its progress, and what taps do.
  * @returns {React.JSX.Element} The recipe page's content.
  */
 const RecipeArticle = (props: RecipeArticleProps): React.JSX.Element =>
 {
-  const { recipe, progress, onCheckIngredient, onCheckStep, onStartTimer } = props;
-  const yieldText = recipe.serves === '' ? `Makes ${recipe.makes}` : `Serves ${recipe.serves}`;
-  const timed = useMemo(() => withTimers(recipe), [ recipe ]);
+  const { recipe, progress, measure, stops, onCheckIngredient, onCheckStep, onStartTimer } = props;
+  const measured = useMemo(() => withMeasures(recipe, measure), [ recipe, measure ]);
+  const timed = useMemo(() => withTimers(measured), [ measured ]);
+  const yieldText = measured.serves === '' ? `Makes ${measured.makes}` : `Serves ${measured.serves}`;
   const current = currentStep(progress, recipe.method.steps.length);
 
   return (
     <article className="recipe" onClick={(event) => startTimerFromTap(event, onStartTimer)}>
       <header className="recipe-header">
         <h1>{recipe.title}</h1>
-        <div className="rich recipe-intro" dangerouslySetInnerHTML={{ __html: recipe.intro }} />
+        <div className="rich recipe-intro" dangerouslySetInnerHTML={{ __html: measured.intro }} />
         <p className="recipe-meta">
           <span>{yieldText}</span>
           <span>{recipe.time}</span>
         </p>
+        <MeasureBar stops={stops} measure={measure} onChooseFactor={props.onChooseFactor} onChooseSystem={props.onChooseSystem} />
         {recipe.tags.length > 0 && (
           <ul className="tags">
             {recipe.tags.map((tag) =>
@@ -62,7 +74,7 @@ const RecipeArticle = (props: RecipeArticleProps): React.JSX.Element =>
       <div className="recipe-body">
         <section className="recipe-ingredients">
           <h2>Ingredients</h2>
-          {recipe.ingredients.map((group, groupIndex) =>
+          {measured.ingredients.map((group, groupIndex) =>
           {
             return (
               <div key={groupIndex} className="ingredient-group">
