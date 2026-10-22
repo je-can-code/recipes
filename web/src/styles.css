@@ -1217,6 +1217,30 @@ html:has(.quest)
   opacity: 0.85;
 }
 
+/* a chip's words: one line, or another recipe's title over its step, each trimmed on its own. */
+.timer-chip-label
+{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.timer-chip-label-stacked
+{
+  line-height: 1.15;
+}
+
+.timer-chip-label-stacked .timer-chip-name:first-child
+{
+  font-weight: 700;
+  opacity: 1;
+}
+
+.timer-chip-label-stacked .timer-chip-name:last-child
+{
+  font-size: 0.75rem;
+}
+
 .timer-chip-armed
 {
   background: var(--danger-text);
@@ -1238,9 +1262,11 @@ html:has(.quest)
   }
 }
 
-/* a chip that leads to another recipe is a link, so it drops a link's underline. */
+/* a chip that leads to another recipe is a link, so it drops a link's underline, and it's a little wider for
+   its two lines. */
 a.timer-chip
 {
+  max-width: 16rem;
   text-decoration: none;
 }
 

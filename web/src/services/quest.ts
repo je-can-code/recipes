@@ -117,15 +117,16 @@ const timerChipText = (timer: Timer, now: number, isArmed: boolean): string =>
 };
 
 /**
- * What a timer's chip calls it: its step's lead on its own recipe's page, and the recipe's title in front of
- * that anywhere else, so a timer from another recipe says whose it is.
+ * What a timer's chip calls it, one line at a time: its step's lead on its own recipe's page, and anywhere
+ * else the recipe's title on a line above the lead, so a timer from another recipe says whose it is without
+ * the two running together into one line too long for the chip.
  * @param {Timer} timer The timer.
  * @param {string} slug The recipe on screen, or '' off a recipe's page.
- * @returns {string} The chip's name.
+ * @returns {string[]} The chip's lines, one or two.
  */
-const timerChipName = (timer: Timer, slug: string): string =>
+const timerChipLines = (timer: Timer, slug: string): string[] =>
 {
-  return timer.slug === slug ? timer.name : `${timer.title} · ${timer.name}`;
+  return timer.slug === slug ? [ timer.name ] : [ timer.title, timer.name ];
 };
 
-export { countIngredients, isCooking, questDetail, questLabel, questPercent, restartLabel, timerChipName, timerChipText };
+export { countIngredients, isCooking, questDetail, questLabel, questPercent, restartLabel, timerChipLines, timerChipText };

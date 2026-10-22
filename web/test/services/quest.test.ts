@@ -6,7 +6,7 @@ import {
   questLabel,
   questPercent,
   restartLabel,
-  timerChipName,
+  timerChipLines,
   timerChipText,
 } from '../../src/services/quest';
 import { emptyProgress } from '../../src/services/progress';
@@ -314,10 +314,10 @@ describe('timerChipText', () =>
 });
 
 /*
- * timerChipName owes a chip on its own recipe the step it's for, and owes a chip anywhere else the recipe
- * it came from as well.
+ * timerChipLines owes a chip on its own recipe the step it's for, and owes a chip anywhere else the recipe
+ * it came from as well, on a line of its own above the step.
  */
-describe('timerChipName', () =>
+describe('timerChipLines', () =>
 {
   it('names a timer by its step on its own recipe\'s page', () =>
   {
@@ -325,23 +325,23 @@ describe('timerChipName', () =>
     const timer = { id: 'soup', slug: 'test-stew', title: 'Test Stew', name: 'Simmer.', label: '5 minutes', endsAt: noon };
 
     // Act.
-    const name = timerChipName(timer, 'test-stew');
+    const lines = timerChipLines(timer, 'test-stew');
 
     // Assert.
-    expect(name)
-      .toBe('Simmer.');
+    expect(lines)
+      .toEqual([ 'Simmer.' ]);
   });
 
-  it('puts the recipe\'s title in front anywhere else', () =>
+  it('puts the recipe\'s title on a line above anywhere else', () =>
   {
     // Arrange.
     const timer = { id: 'soup', slug: 'test-stew', title: 'Test Stew', name: 'Simmer.', label: '5 minutes', endsAt: noon };
 
     // Act.
-    const name = timerChipName(timer, '');
+    const lines = timerChipLines(timer, '');
 
     // Assert.
-    expect(name)
-      .toBe('Test Stew · Simmer.');
+    expect(lines)
+      .toEqual([ 'Test Stew', 'Simmer.' ]);
   });
 });

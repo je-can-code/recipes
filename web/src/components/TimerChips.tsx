@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { timerChipName, timerChipText } from '../services/quest';
+import { timerChipLines, timerChipText } from '../services/quest';
 import { byUrgency, isRinging } from '../services/timers';
 import type { Timer } from '../services/timers';
 import { Icon } from './Icons';
@@ -34,11 +34,14 @@ const TimerChips = (props: TimerChipsProps): React.JSX.Element =>
       {
         const isRingingNow = isRinging(timer, now);
         const isArmed = armed === timer.id;
+        const lines = timerChipLines(timer, slug);
         const face = (
           <>
             <Icon name="clock" />
             <span className="timer-chip-clock">{timerChipText(timer, now, isArmed)}</span>
-            <span className="timer-chip-name">{timerChipName(timer, slug)}</span>
+            <span className={lines.length > 1 ? 'timer-chip-label timer-chip-label-stacked' : 'timer-chip-label'}>
+              {lines.map((line, index) => <span key={index} className="timer-chip-name">{line}</span>)}
+            </span>
           </>
         );
 
