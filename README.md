@@ -193,7 +193,7 @@ Copy `config.example.yaml` to `config.yaml` and point `recipesFolder` at some ca
 | Command | What it does |
 |---|---|
 | `bun run dev` | Go on port 8686 and Vite on 5173. Open `http://localhost:5173`, and pages reload as you edit. An always-on copy on other ports keeps running alongside. |
-| `bun run build` | Typechecks, builds the website and its service worker into the server, then builds `bin/recipes`. |
+| `bun run build` | Typechecks, builds the website and its service worker into the server, then builds `bin/recipes` with git's name for the commit written in as its version, like `v1.1.0`. |
 | `bun run deploy` | Builds everything, then restarts the [always-on service](#always-on-on-linux) so it runs the new build. |
 | `bun run start` | Runs `bin/recipes` by hand with `config.yaml`. Stop the service first if it uses the same ports. |
 | `bun run check` | Reads every card and lists every problem. Exits 1 if there are any. |
@@ -396,6 +396,7 @@ carry a private key or anything from a `certs` folder.
 | `.github/workflows/` | The tests on every push, and the release on every version tag |
 | `scripts/app-icon.html` | The home-screen icon, which the PNGs in `web/public` are screenshots of |
 | `scripts/build-worker.ts` | Builds the service worker into the site as `sw.js`, after Vite has built the rest, with the build's name and file list written in |
+| `scripts/build-server.ts` | Builds the program into `bin/recipes`, with git's name for the commit written in as its version, or `dev` without git |
 | `web/src/worker` | The service worker. `policy.ts` and `strategies.ts` decide what's saved and when the copy answers, as plain tested functions, and `sw.ts` connects them to the browser. `tsconfig.worker.json` checks it against a worker's globals rather than a page's |
 | `web/src/services` | Search, shelves, courses and the home page's address, link handling, the API client, installing the service worker, and everything cooking runs on (progress, timers and finding times in a step, batch sizes and metric in `amounts.ts` and `measures.ts`, the tracker's words, confetti physics, the chime), as plain tested functions |
 | `web/src/hooks` | The glue between those services and the browser: loading a recipe, saving progress, running the site's timers, remembering the batch size and measuring system, the screen wake lock, remembering which courses are open |

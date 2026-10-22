@@ -39,8 +39,9 @@ const readHeaderTimeout = 10 * time.Second
 // machineName is this machine's own name, like j-desktop. It's os.Hostname everywhere but the tests.
 var machineName = os.Hostname
 
-// version is the release this program was built as, like v1.0.0, which the release build writes in. A copy
-// built any other way says dev.
+// version is what git called this program's commit when it was built, like v1.0.0 on a release's own commit,
+// which the release build and `bun run build` write in. A copy built any other way, like the one `bun run dev`
+// runs, says dev.
 var version = "dev"
 
 // programFolder is the folder this program sits in, which is where a downloaded copy keeps its config. It's
