@@ -19,6 +19,7 @@ const gravy = (changes: Partial<RecipeDetail> = {}): RecipeDetail =>
     serves: '2',
     makes: '',
     time: 'about 10 minutes',
+    revision: 'test-gravy-1',
     intro: '<p>A gravy.</p>',
     scales: true,
     ingredients: [ { name: '', items: [ '1/4 cup flour', '2 cups milk' ], keys: [ 'flour', 'milk' ], after: '' } ],

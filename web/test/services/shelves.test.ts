@@ -32,7 +32,7 @@ import type { Catalog, Collection, RecipeSummary } from '../../src/types';
  */
 const recipe = (slug: string, folder: string, tags: string[]): RecipeSummary =>
 {
-  return { slug, title: slug, folder, tags, serves: '2', makes: '', time: 'about 10 minutes' };
+  return { slug, title: slug, folder, tags, serves: '2', makes: '', time: 'about 10 minutes', revision: `${slug}-1` };
 };
 
 /**

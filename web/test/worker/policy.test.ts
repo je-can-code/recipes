@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   appAddresses,
+  changedPaths,
+  entityTag,
   forgottenPaths,
   isAway,
   isOldAppCache,
@@ -126,6 +128,51 @@ describe('recipePaths', () =>
     // Assert.
     expect(paths)
       .toEqual([ '/api/recipes/chimichurri', '/api/recipes/a%20b' ]);
+  });
+});
+
+/*
+ * entityTag owes the refresh the exact form the desktop sends a revision in. Any other form makes every
+ * saved recipe look changed, and every visit downloads the whole cookbook again.
+ */
+describe('entityTag', () =>
+{
+  it('writes a revision inside double quotes, the way the desktop sends an ETag', () =>
+  {
+    // Arrange.
+    const revision = 'a1b2c3d4e5f6';
+
+    // Act.
+    const tag = entityTag(revision);
+
+    // Assert.
+    expect(tag)
+      .toBe('"a1b2c3d4e5f6"');
+  });
+});
+
+/*
+ * changedPaths owes the refresh exactly the recipes whose saved copy is missing or out of date. Leaving one
+ * out keeps it stale away from home, and adding a current one downloads it for nothing on every visit.
+ */
+describe('changedPaths', () =>
+{
+  it('picks the recipes saved at another revision or never saved, by their escaped address', () =>
+  {
+    // Arrange- stew and "a b" are current, punch is a revision behind, and pie was never saved.
+    const catalog = catalogOf([ 'stew', 'punch', 'pie', 'a b' ], { punch: 'punch-2' });
+    const savedTags = new Map([
+      [ '/api/recipes/stew', '"stew-1"' ],
+      [ '/api/recipes/punch', '"punch-1"' ],
+      [ '/api/recipes/a%20b', '"a b-1"' ],
+    ]);
+
+    // Act.
+    const changed = changedPaths(catalog, savedTags);
+
+    // Assert.
+    expect(changed)
+      .toEqual([ '/api/recipes/punch', '/api/recipes/pie' ]);
   });
 });
 

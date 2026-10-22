@@ -214,6 +214,7 @@ const timelyRecipe = (): RecipeDetail =>
     serves: '2',
     makes: '',
     time: 'about 1 hour',
+    revision: 'test-stew-1',
     intro: '<p>Ready in 30 minutes.</p>',
     scales: false,
     ingredients: [ { name: '', items: [ 'Beef soaked for 5 minutes' ], keys: [ '' ], after: '<p>Rinse it for 1 minute.</p>' } ],

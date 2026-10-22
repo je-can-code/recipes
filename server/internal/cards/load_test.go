@@ -3,6 +3,7 @@ package cards
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -370,5 +371,77 @@ func TestLibraryFindReportsAMissingRecipe(t *testing.T) {
 	// Assert.
 	if found {
 		t.Fatal("found a recipe that doesn't exist")
+	}
+}
+
+// revisionShape is what every revision looks like: twelve lowercase hex characters.
+var revisionShape = regexp.MustCompile(`^[0-9a-f]{12}$`)
+
+// TestLoadGivesEachRecipeARevision covers the revision every recipe carries, which is twelve hex characters
+// and different for two different recipes.
+func TestLoadGivesEachRecipeARevision(t *testing.T) {
+	// Arrange.
+	files := map[string]string{"apple-pie.yaml": cardTitled("Apple Pie"), "test-gravy.yaml": completeCard}
+
+	// Act.
+	library := loadFolder(t, files)
+
+	// Assert.
+	pie := library.Recipes[0].Revision
+	gravy := library.Recipes[1].Revision
+	if revisionShape.MatchString(pie) == false || revisionShape.MatchString(gravy) == false || pie == gravy {
+		t.Fatalf("got revisions %q and %q, expected two different ones of twelve hex characters", pie, gravy)
+	}
+}
+
+// TestLoadKeepsARevisionWhileTheCardStaysTheSame covers loading an untouched folder twice, which must give
+// each recipe the same revision both times, or every device would download every recipe on every visit.
+func TestLoadKeepsARevisionWhileTheCardStaysTheSame(t *testing.T) {
+	// Arrange.
+	folder := writeFolder(t, map[string]string{"test-gravy.yaml": completeCard})
+	first, err := Load(folder)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Act.
+	second, err := Load(folder)
+
+	// Assert.
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Recipes[0].Revision != second.Recipes[0].Revision {
+		t.Fatalf("got revision %q, then %q", first.Recipes[0].Revision, second.Recipes[0].Revision)
+	}
+}
+
+// TestLoadMovesOnlyTheEditedRecipesRevision covers an edit to one card's note, which shows on its page but
+// not in any list: its revision has to move, and the untouched card's has to stay, so a device downloads
+// exactly the recipe that changed.
+func TestLoadMovesOnlyTheEditedRecipesRevision(t *testing.T) {
+	// Arrange.
+	folder := writeFolder(t, map[string]string{"apple-pie.yaml": cardTitled("Apple Pie"), "test-gravy.yaml": completeCard})
+	before, err := Load(folder)
+	if err != nil {
+		t.Fatal(err)
+	}
+	edited := cardWithLine(t, "      add milk.", "      add a splash more milk.")
+	if err := os.WriteFile(filepath.Join(folder, "test-gravy.yaml"), []byte(edited), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Act.
+	after, err := Load(folder)
+
+	// Assert- apple pie sorts first by title.
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.Recipes[0].Revision != before.Recipes[0].Revision {
+		t.Fatalf("the untouched card's revision moved from %q to %q", before.Recipes[0].Revision, after.Recipes[0].Revision)
+	}
+	if after.Recipes[1].Revision == before.Recipes[1].Revision {
+		t.Fatalf("the edited card's revision stayed %q", after.Recipes[1].Revision)
 	}
 }

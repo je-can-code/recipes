@@ -201,8 +201,8 @@ Copy `config.example.yaml` to `config.yaml` and point `recipesFolder` at some ca
 | `bun run test` | The website's tests, then the server's. |
 | `bun run release` | Builds the website, then the three downloads into `release/`. |
 
-Cards reload on their own: save one and the next page load shows it. Code doesn't, so after changing it,
-build again and restart.
+Cards reload on their own: save one, and any page loaded a second later shows it. Code doesn't, so after
+changing it, build again and restart.
 
 ## How a page gets to the screen
 
@@ -214,6 +214,8 @@ build again and restart.
    problem naming the file and saying what to fix, and every good card still loads.
 3. **It serves them as JSON** (`server/internal/api`). `GET /api/recipes` lists every recipe along with
    the collections and every problem, and `GET /api/recipes/{name}` returns one recipe, ready to show.
+   Every recipe carries a revision, a short hash of everything the site shows for it, which the recipe's
+   own answer also sends as its ETag.
 4. **The website is a React app** (`web/`), built once into `server/internal/site/dist` and baked into
    the Go program. Any address that isn't a file or under `/api` gets the app's page, and the app decides
    what that address shows.
@@ -223,8 +225,9 @@ build again and restart.
    saves what comes back, and answers from that copy when the server can't be reached. See
    [Away from home](#away-from-home).
 
-The server compares the cards' sizes and modified times on every request, and reads the folder again
-when anything changed. A new or edited card shows up on the next page load, without a restart.
+The server compares the cards' sizes and modified times at most once a second, since one page load can ask
+for hundreds of recipes at once, and reads the folder again when anything changed. A new or edited card
+shows up a second later at most, without a restart.
 
 ## Cooking from a recipe
 
@@ -335,13 +338,15 @@ https, the site opens anyway, because every device keeps its own copy of the app
   within two seconds, and is saved for later. When it doesn't, the saved copy answers, and for the next
   five minutes the copy answers straight away, so only the first tap away from home has to wait. The
   computer is still asked behind every answer, and as soon as it replies, everything comes from it again.
-- **Opening the list refreshes every saved recipe**, at most once a minute, and forgets the ones whose
-  cards are gone. Checkmarks and timers already live on the device, so cooking needs nothing from the
-  computer.
+- **Opening the list refreshes the saved recipes**, at most once a minute. Each saved recipe kept the ETag
+  it came with, and only the ones whose ETag no longer matches the revision in the catalog are downloaded
+  again, so a visit where no card changed downloads none at all. Recipes whose cards are gone are
+  forgotten. Checkmarks and timers already live on the device, so cooking needs nothing from the computer.
 - **New builds reach devices by themselves.** `scripts/build-worker.ts` names each build after its
   contents and writes that name into `sw.js`. Browsers check `sw.js` whenever the site opens, and a changed
-  one installs the new build and deletes the old one's files. A rebuild that changed nothing keeps its name,
-  so devices have nothing to download.
+  one installs the new build, deletes the old one's files, and saves every recipe again whatever its
+  revision, since the computer may now answer an unchanged card differently. A rebuild that changed nothing
+  keeps its name, so devices have nothing to download.
 - **A recipe that was never saved**, like one added while the device was away, says so instead of
   showing a blank page.
 

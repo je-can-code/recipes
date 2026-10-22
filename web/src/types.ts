@@ -10,7 +10,8 @@ interface Problem
 /**
  * What lists and search need to know about a recipe. The folder is the one the card sits in, or empty at
  * the top level. Serves and makes are free text, and a card has exactly one of the two; the other arrives
- * empty.
+ * empty. The revision names this version of the recipe, and moves whenever anything the site shows for it
+ * changes, which is how the service worker knows which saved recipes are out of date.
  */
 interface RecipeSummary
 {
@@ -21,6 +22,7 @@ interface RecipeSummary
   serves: string;
   makes: string;
   time: string;
+  revision: string;
 }
 
 /**

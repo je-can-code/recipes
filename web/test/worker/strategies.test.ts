@@ -3,6 +3,7 @@ import {
   askDesktopFirst,
   copyFirst,
   notSavedYet,
+  refreshChangedRecipes,
   refreshEverything,
   refreshEveryRecipe,
 } from '../../src/worker/strategies';
@@ -226,16 +227,19 @@ describe('askDesktopFirst', () =>
       .toBe('error');
   });
 
-  it('refreshes every recipe after a fresh catalog, when they\'re due', async () =>
+  it('refreshes the changed recipes after a fresh catalog, when they\'re due', async () =>
   {
-    // Arrange.
-    const catalog = JSON.stringify(catalogOf([ 'stew', 'punch' ]));
-    const { surroundings, recipes, kept } = rig({
+    // Arrange- stew was saved at its current revision and punch at an older one. The desktop would send
+    // either, so only the revisions keep stew from being downloaded.
+    const catalog = JSON.stringify(catalogOf([ 'stew', 'punch' ], { punch: 'punch-2' }));
+    const { surroundings, recipes, asked, kept } = rig({
       desktop: desktopAnswering({
         [catalogAddress]: [ 200, catalog ],
-        [recipeAddress('stew')]: [ 200, 'fresh stew' ],
-        [recipeAddress('punch')]: [ 200, 'fresh punch' ],
+        [recipeAddress('stew')]: [ 200, 'fresh stew', '"stew-1"' ],
+        [recipeAddress('punch')]: [ 200, 'fresh punch', '"punch-2"' ],
       }),
+      recipes: { [recipeAddress('stew')]: 'saved stew', [recipeAddress('punch')]: 'saved punch' },
+      recipeTags: { [recipeAddress('stew')]: '"stew-1"', [recipeAddress('punch')]: '"punch-1"' },
       refreshedAt: 400000,
       now: 500000,
     });
@@ -245,10 +249,12 @@ describe('askDesktopFirst', () =>
     await Promise.all(kept);
 
     // Assert.
+    expect(asked)
+      .toEqual([ catalogAddress, recipeAddress('punch') ]);
     expect(Object.fromEntries(recipes.bodies))
       .toEqual({
         [catalogAddress]: catalog,
-        [recipeAddress('stew')]: 'fresh stew',
+        [recipeAddress('stew')]: 'saved stew',
         [recipeAddress('punch')]: 'fresh punch',
       });
     expect(surroundings.desktop.refreshedAt)
@@ -314,6 +320,113 @@ describe('copyFirst', () =>
     // Assert.
     expect(await response.text())
       .toBe('an icon');
+  });
+});
+
+/*
+ * refreshChangedRecipes owes the copy every listed recipe at its current revision while downloading only
+ * the ones that moved. Skipping a changed one leaves it stale away from home, and downloading a current one
+ * costs the desktop and the battery on every visit.
+ */
+describe('refreshChangedRecipes', () =>
+{
+  it('downloads only the recipes saved at another revision, and forgets the unlisted', async () =>
+  {
+    // Arrange- stew is current, punch is a revision behind, and old soup's card is gone.
+    const { surroundings, recipes, asked } = rig({
+      desktop: desktopAnswering({
+        [recipeAddress('stew')]: [ 200, 'fresh stew', '"stew-1"' ],
+        [recipeAddress('punch')]: [ 200, 'fresh punch', '"punch-2"' ],
+      }),
+      recipes: {
+        [catalogAddress]: 'the catalog',
+        [recipeAddress('stew')]: 'saved stew',
+        [recipeAddress('punch')]: 'saved punch',
+        [recipeAddress('old-soup')]: 'old soup',
+      },
+      recipeTags: {
+        [recipeAddress('stew')]: '"stew-1"',
+        [recipeAddress('punch')]: '"punch-1"',
+        [recipeAddress('old-soup')]: '"old-soup-1"',
+      },
+    });
+
+    // Act.
+    await refreshChangedRecipes(catalogOf([ 'stew', 'punch' ], { punch: 'punch-2' }), surroundings);
+
+    // Assert- punch is saved with its new revision, so the next refresh skips it as well.
+    expect(asked)
+      .toEqual([ recipeAddress('punch') ]);
+    expect(Object.fromEntries(recipes.bodies))
+      .toEqual({
+        [catalogAddress]: 'the catalog',
+        [recipeAddress('stew')]: 'saved stew',
+        [recipeAddress('punch')]: 'fresh punch',
+      });
+    expect(Object.fromEntries(recipes.tags))
+      .toEqual({ [recipeAddress('stew')]: '"stew-1"', [recipeAddress('punch')]: '"punch-2"' });
+  });
+
+  it('downloads a recipe that was never saved', async () =>
+  {
+    // Arrange- stew is saved and current, so only pie is new.
+    const { surroundings, recipes, asked } = rig({
+      desktop: desktopAnswering({
+        [recipeAddress('stew')]: [ 200, 'fresh stew', '"stew-1"' ],
+        [recipeAddress('pie')]: [ 200, 'fresh pie', '"pie-1"' ],
+      }),
+      recipes: { [recipeAddress('stew')]: 'saved stew' },
+      recipeTags: { [recipeAddress('stew')]: '"stew-1"' },
+    });
+
+    // Act.
+    await refreshChangedRecipes(catalogOf([ 'stew', 'pie' ]), surroundings);
+
+    // Assert.
+    expect(asked)
+      .toEqual([ recipeAddress('pie') ]);
+    expect(recipes.bodies.get(recipeAddress('pie')))
+      .toBe('fresh pie');
+  });
+
+  it('downloads a recipe saved before recipes had revisions', async () =>
+  {
+    // Arrange- stew was saved with no ETag at all, and punch at its current revision.
+    const { surroundings, recipes, asked } = rig({
+      desktop: desktopAnswering({
+        [recipeAddress('stew')]: [ 200, 'fresh stew', '"stew-1"' ],
+        [recipeAddress('punch')]: [ 200, 'fresh punch', '"punch-1"' ],
+      }),
+      recipes: { [recipeAddress('stew')]: 'saved stew', [recipeAddress('punch')]: 'saved punch' },
+      recipeTags: { [recipeAddress('punch')]: '"punch-1"' },
+    });
+
+    // Act.
+    await refreshChangedRecipes(catalogOf([ 'stew', 'punch' ]), surroundings);
+
+    // Assert.
+    expect(asked)
+      .toEqual([ recipeAddress('stew') ]);
+    expect(recipes.tags.get(recipeAddress('stew')))
+      .toBe('"stew-1"');
+  });
+
+  it('forgets nothing when the desktop drops out partway', async () =>
+  {
+    // Arrange.
+    const { surroundings, recipes } = rig({
+      desktop: unreachable,
+      recipes: { [recipeAddress('old-soup')]: 'old soup' },
+    });
+
+    // Act.
+    const refresh = refreshChangedRecipes(catalogOf([ 'stew' ]), surroundings);
+
+    // Assert.
+    await expect(refresh)
+      .rejects.toThrow('Load failed');
+    expect(Object.fromEntries(recipes.bodies))
+      .toEqual({ [recipeAddress('old-soup')]: 'old soup' });
   });
 });
 
@@ -417,6 +530,29 @@ describe('refreshEverything', () =>
       .toEqual({ [catalogAddress]: catalog, [recipeAddress('stew')]: 'fresh stew' });
     expect(surroundings.desktop.refreshedAt)
       .toBe(500000);
+  });
+
+  it('saves a recipe again even when it was saved at its current revision', async () =>
+  {
+    // Arrange- a new build may come with a desktop that answers an unchanged card differently.
+    const catalog = JSON.stringify(catalogOf([ 'stew' ]));
+    const { surroundings, recipes, asked } = rig({
+      desktop: desktopAnswering({
+        [catalogAddress]: [ 200, catalog ],
+        [recipeAddress('stew')]: [ 200, 'fresh stew', '"stew-1"' ],
+      }),
+      recipes: { [recipeAddress('stew')]: 'saved stew' },
+      recipeTags: { [recipeAddress('stew')]: '"stew-1"' },
+    });
+
+    // Act.
+    await refreshEverything(surroundings);
+
+    // Assert.
+    expect(asked)
+      .toEqual([ catalogAddress, recipeAddress('stew') ]);
+    expect(recipes.bodies.get(recipeAddress('stew')))
+      .toBe('fresh stew');
   });
 
   it('saves nothing when the desktop won\'t send the catalog', async () =>

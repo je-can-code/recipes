@@ -240,11 +240,38 @@ func TestShowRecipeAnswersAMissingRecipeWith404(t *testing.T) {
 	// Act.
 	response := request(t, routes, "/api/recipes/nope")
 
-	// Assert.
+	// Assert- with no recipe, there's no revision to name either.
 	body := errorBody{}
 	decode(t, response, &body)
 	if response.Code != http.StatusNotFound || body.Error != `There's no recipe named "nope".` {
 		t.Fatalf("got %d %q", response.Code, body.Error)
+	}
+	if response.Header().Get("ETag") != "" {
+		t.Fatalf("got ETag %q on a missing recipe", response.Header().Get("ETag"))
+	}
+}
+
+// TestShowRecipeSendsTheCatalogsRevisionAsItsETag covers the one promise a device's saved copy depends
+// on: each recipe's answer carries the catalog's revision for that recipe as its ETag, in quotes, and two
+// recipes carry different ones.
+func TestShowRecipeSendsTheCatalogsRevisionAsItsETag(t *testing.T) {
+	// Arrange- the catalog lists biscuits first, by title.
+	routes := serveFolder(t, map[string]string{"test-gravy.yaml": gravyCard, "biscuits.yaml": biscuitsCard})
+	catalog := Catalog{}
+	decode(t, request(t, routes, "/api/recipes"), &catalog)
+	biscuitsRevision := catalog.Recipes[0].Revision
+	gravyRevision := catalog.Recipes[1].Revision
+
+	// Act.
+	biscuits := request(t, routes, "/api/recipes/biscuits")
+	gravy := request(t, routes, "/api/recipes/test-gravy")
+
+	// Assert.
+	if len(biscuitsRevision) != 12 || biscuitsRevision == gravyRevision {
+		t.Fatalf("got revisions %q and %q, expected two different ones of twelve characters", biscuitsRevision, gravyRevision)
+	}
+	if biscuits.Header().Get("ETag") != `"`+biscuitsRevision+`"` || gravy.Header().Get("ETag") != `"`+gravyRevision+`"` {
+		t.Fatalf("got ETags %q and %q for revisions %q and %q", biscuits.Header().Get("ETag"), gravy.Header().Get("ETag"), biscuitsRevision, gravyRevision)
 	}
 }
 
