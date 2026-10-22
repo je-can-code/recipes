@@ -62,10 +62,12 @@ const courses = [
  * Which course claims a recipe tagged with more than one, first to last. Each recipe is listed once, so
  * the particular kind of dish wins over the meal it's eaten at: a ramen tagged dinner and soup is found
  * with the soups, a juice tagged breakfast and drink with the drinks, and a tart tagged baking and dessert
- * with the desserts.
+ * with the desserts. A sauce or a bake is usually part of a meal, so those two claim last and give way to
+ * the meal: biscuits tagged baking and brunch are found under Breakfast & Brunch, and a pizza tagged dinner
+ * and baking under Dinner. A bread tagged only baking still has a course of its own.
  */
 const claimOrder = [
-  'drink', 'dessert', 'soup', 'salad', 'sauce', 'baking', 'side', 'breakfast', 'brunch', 'lunch', 'dinner', 'snack',
+  'drink', 'dessert', 'soup', 'salad', 'side', 'breakfast', 'brunch', 'lunch', 'dinner', 'snack', 'baking', 'sauce',
 ];
 
 /**

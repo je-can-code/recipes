@@ -724,6 +724,30 @@ describe('groupByCourse', () =>
       ]);
   });
 
+  it('lets a sauce or a bake give way to the meal it\'s part of', () =>
+  {
+    // Arrange- a bake and a sauce with a meal each, and a bread and a sauce with none to give way to.
+    const recipes = [
+      recipe('flaky-biscuits', '', [ 'baking', 'brunch' ]),
+      recipe('cheese-pizza', '', [ 'baking', 'dinner' ]),
+      recipe('focaccia', '', [ 'baking' ]),
+      recipe('chorizo-gravy', '', [ 'brunch', 'sauce' ]),
+      recipe('chimichurri', '', [ 'sauce' ]),
+    ];
+
+    // Act.
+    const groups = groupByCourse(recipes);
+
+    // Assert.
+    expect(groups.map((group) => [ group.heading, slugsOf(group.recipes) ]))
+      .toEqual([
+        [ 'Breakfast & Brunch', [ 'flaky-biscuits', 'chorizo-gravy' ] ],
+        [ 'Dinner', [ 'cheese-pizza' ] ],
+        [ 'Sauces', [ 'chimichurri' ] ],
+        [ 'Baking', [ 'focaccia' ] ],
+      ]);
+  });
+
   it('puts recipes with no course last, under everything else', () =>
   {
     // Arrange- a recipe tagged only with what it's made of.
