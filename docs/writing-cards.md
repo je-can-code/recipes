@@ -67,6 +67,11 @@ How a recipe card should read, for anyone writing one, person or agent. The form
   both with the in-game name (`hamburger`), since search reads titles and tags and would otherwise lose it.
 - When versions of a dish differ only by the meat, write one card that offers each meat, with whatever
   changes for each one, usually the cooking time.
+- When a game serves a fancier version of a dish that already has a card, like Deluxe Sushi beside Sushi, it
+  gets a note on that card rather than a card of its own, even when that makes a sixth note. The lead names
+  the dish and its game, `lead: "Deluxe Sushi (SO6):"`, and the text says how to take the card's recipe there.
+- When the fancier version changes how the dish is made, like a pasta served cold or a stir-fry under a new
+  sauce, it gets a short card of its own that builds on the base.
 - A dish built on another, like a bun filled with a game's curry, links to that card for the shared part
   and writes out the rest.
 
