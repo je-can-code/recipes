@@ -404,6 +404,19 @@ describe('countRest', () =>
       .toEqual([ ' bunches thick scallions', ' heads green leaf lettuce', ' strips orange peel', ' big handful mint leaves' ]);
   });
 
+  it('counts a container only in the first two words, so a name like New York strip keeps its strip', () =>
+  {
+    // Arrange.
+    const cases: [ string, number ][] = [ [ ' New York strip steaks', 1 ], [ ' big leaves green leaf lettuce', 1 ], [ ' orange wheels', 1 ] ];
+
+    // Act.
+    const words = cases.map(([ rest, value ]) => countRest(rest, value));
+
+    // Assert.
+    expect(words)
+      .toEqual([ ' New York strip steak', ' big leaf green leaf lettuce', ' orange wheel' ]);
+  });
+
   it('leaves a hyphenated word and anything after "of", and reads accented letters', () =>
   {
     // Arrange.
@@ -450,17 +463,17 @@ describe('isIndivisible', () =>
       .toEqual([ true, true, true ]);
   });
 
-  it('lets onions be split, white or not', () =>
+  it('lets onions and peaches be split, white or not', () =>
   {
     // Arrange.
-    const rests = [ ' onions', ' white onion' ];
+    const rests = [ ' onions', ' white onion', ' white peaches' ];
 
     // Act.
     const found = rests.map(isIndivisible);
 
     // Assert.
     expect(found)
-      .toEqual([ false, false ]);
+      .toEqual([ false, false, false ]);
   });
 });
 

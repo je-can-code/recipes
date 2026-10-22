@@ -305,7 +305,9 @@ const countNouns: [ string, string ][] = [
   [ 'eggplant', 'eggplants' ],
   [ 'envelope', 'envelopes' ],
   [ 'fillet', 'fillets' ],
+  [ 'flag', 'flags' ],
   [ 'glass', 'glasses' ],
+  [ 'green', 'greens' ],
   [ 'half', 'halves' ],
   [ 'handful', 'handfuls' ],
   [ 'head', 'heads' ],
@@ -340,6 +342,7 @@ const countNouns: [ string, string ][] = [
   [ 'pancake', 'pancakes' ],
   [ 'pat', 'pats' ],
   [ 'patty', 'patties' ],
+  [ 'peach', 'peaches' ],
   [ 'pear', 'pears' ],
   [ 'pepper', 'peppers' ],
   [ 'peppercorn', 'peppercorns' ],
@@ -362,7 +365,6 @@ const countNouns: [ string, string ][] = [
   [ 'roll', 'rolls' ],
   [ 'root', 'roots' ],
   [ 'rosebud', 'rosebuds' ],
-  [ 'round', 'rounds' ],
   [ 'russet', 'russets' ],
   [ 'sac', 'sacs' ],
   [ 'sapodilla', 'sapodillas' ],
@@ -399,6 +401,7 @@ const countNouns: [ string, string ][] = [
   [ 'triangle', 'triangles' ],
   [ 'turnip', 'turnips' ],
   [ 'wedge', 'wedges' ],
+  [ 'wheel', 'wheels' ],
   [ 'white', 'whites' ],
   [ 'wing', 'wings' ],
   [ 'wonton', 'wontons' ],
@@ -430,6 +433,7 @@ const containerNouns = [
   'handful',
   'head',
   'jar',
+  'leaf',
   'loaf',
   'mug',
   'pack',
@@ -838,9 +842,10 @@ const joinMetric = (low: string, high: string): string =>
 
 /**
  * Finds the thing a count counts, among the words before the first parenthesis, comma, or "or", "and", "for"
- * or "of": a container the page knows, like the bunch in "1 bunch scallions", when one comes first, and
- * otherwise the last word it knows how to pluralize, so "2 potato buns" counts buns and "2 egg whites" counts
- * whites. A hyphenated word is read whole, so "flat-leaf" stays as it is.
+ * or "of": a container the page knows, like the bunch in "1 bunch scallions", when it's one of the first two
+ * words, and otherwise the last word it knows how to pluralize, so "2 potato buns" counts buns, "2 egg whites"
+ * counts whites, and "2 New York strip steaks" counts steaks. A hyphenated word is read whole, so "flat-leaf"
+ * stays as it is.
  * @param {string} rest The words after the count, like " medium Yukon Gold potatoes, diced".
  * @returns {{ index: number, word: string, singular: string, plural: string } | null} Where the word is in
  * rest, the word as written, and its two forms, or null when there isn't one.
@@ -852,20 +857,22 @@ const countedNoun = (rest: string): { index: number; word: string; singular: str
 
   // every word the page knows, in order, reading a hyphenated word whole, so "flat-leaf" is never a leaf.
   const known = [ ...window.matchAll(/\p{L}+(?:-\p{L}+)*/gu) ]
-    .flatMap((word) =>
+    .flatMap((word, place) =>
     {
       const lower = word[0].toLowerCase();
       const forms = countNouns.find(([ singular, plural ]) => singular === lower || plural === lower);
-      return forms === undefined ? [] : [ { index: word.index, word: word[0], singular: forms[0], plural: forms[1] } ];
+      return forms === undefined ? [] : [ { place, index: word.index, word: word[0], singular: forms[0], plural: forms[1] } ];
     });
 
-  // a container named first is what's counted; otherwise the last word is.
-  const container = known.find((noun) => containerNouns.includes(noun.singular));
-  if (container !== undefined)
+  // a container in the first two words is what's counted, like the bunch in "1 bunch scallions" or the handful in
+  // "1 big handful mint"; further in, it's part of a name, like the strip in "New York strip steaks".
+  const container = known.find((noun) => noun.place < 2 && containerNouns.includes(noun.singular));
+  const counted = container ?? known[known.length - 1];
+  if (counted === undefined)
   {
-    return container;
+    return null;
   }
-  return known.length === 0 ? null : known[known.length - 1];
+  return { index: counted.index, word: counted.word, singular: counted.singular, plural: counted.plural };
 };
 
 /**
