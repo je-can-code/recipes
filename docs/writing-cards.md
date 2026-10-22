@@ -83,8 +83,8 @@ measures. It can only scale what it can see, so a card that scales keeps its amo
 - Amounts live in the ingredients. Start each line with its amount ("1 lemon, juiced", not "Juice of 1
   lemon"), put the counted thing right after a count ("2 chicken thighs, boneless and skinless"), give each
   amount its own line ("1 tbsp butter" and "1 tbsp neutral oil", not both on one), and write a package's size
-  with "each": "1 can (14.5 oz each) diced tomatoes". A length never scales, so a line that would lead with one
-  leads with a count of pieces instead: "1 piece ginger, 2 inches long".
+  with "each": "1 can (14.5 oz each) diced tomatoes". A length never scales, so a line that would lead with
+  one leads with a count of pieces instead: "1 piece ginger, 2 inches long".
 - Give a key to each ingredient a step or note points at: `3 cups water {water}`. Name it the way it reads
   after "the": `{olive-oil}` is "the olive oil", and `{Sichuan-pepper}` keeps its capital.
 - Point at an ingredient where a step adds or measures it: "Pour in {sake}, then {water}." The page shows
