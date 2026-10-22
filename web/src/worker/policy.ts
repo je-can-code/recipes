@@ -26,8 +26,8 @@ const desktopPatience = 2000;
 const awayFor = 5 * 60 * 1000;
 
 /**
- * The least time between two refreshes of every saved recipe, in milliseconds. Opening the list refreshes
- * them all, and going back and forth between the list and a few recipes shouldn't download the whole
+ * The least time between two refreshes of the saved recipes, in milliseconds. Opening the list refreshes
+ * them, and going back and forth between the list and a few recipes shouldn't look over the whole
  * cookbook every time.
  */
 const refreshEvery = 60 * 1000;
@@ -96,6 +96,16 @@ const isRecipePath = (path: string): boolean =>
 };
 
 /**
+ * The address of one recipe, written the way the recipe page asks for it.
+ * @param {string} slug The recipe's name.
+ * @returns {string} Its address, without the origin.
+ */
+const recipePath = (slug: string): string =>
+{
+  return `${catalogPath}/${encodeURIComponent(slug)}`;
+};
+
+/**
  * The address of every recipe in a catalog, written the way the recipe page asks for them.
  * @param {Catalog} catalog The catalog listing the recipes.
  * @returns {string[]} One address per recipe, without the origin.
@@ -104,8 +114,41 @@ const recipePaths = (catalog: Catalog): string[] =>
 {
   return catalog.recipes.map((recipe) =>
   {
-    return `${catalogPath}/${encodeURIComponent(recipe.slug)}`;
+    return recipePath(recipe.slug);
   });
+};
+
+/**
+ * Writes a recipe's revision the way the desktop sends it as the ETag of the recipe's answer, inside
+ * double quotes, so the catalog's revision and a saved recipe's ETag can be compared.
+ * @param {string} revision The revision, as the catalog lists it.
+ * @returns {string} The revision written as an ETag.
+ */
+const entityTag = (revision: string): string =>
+{
+  return `"${revision}"`;
+};
+
+/**
+ * The listed recipes worth downloading again: each one whose saved copy is missing, or was saved at another
+ * revision than the catalog gives it now. Every other saved recipe is already exactly what the desktop
+ * would send, so asking for it again would only cost the desktop's time and the device's battery.
+ * @param {Catalog} catalog The catalog the desktop just sent.
+ * @param {Map<string, string>} savedTags The ETag each saved recipe came with, by address without the
+ * origin. A recipe saved by a build from before revisions has none, and counts as changed.
+ * @returns {string[]} The address of each recipe to download, without the origin.
+ */
+const changedPaths = (catalog: Catalog, savedTags: Map<string, string>): string[] =>
+{
+  return catalog.recipes
+    .filter((recipe) =>
+    {
+      return savedTags.get(recipePath(recipe.slug)) !== entityTag(recipe.revision);
+    })
+    .map((recipe) =>
+    {
+      return recipePath(recipe.slug);
+    });
 };
 
 /**
@@ -201,7 +244,9 @@ export {
   appCacheName,
   awayFor,
   catalogPath,
+  changedPaths,
   desktopPatience,
+  entityTag,
   forgottenPaths,
   isAppFile,
   isAway,

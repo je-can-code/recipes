@@ -9,15 +9,17 @@ import (
 	"recipes/server/internal/cards"
 )
 
-// Summary is what the home page and search need to know about a recipe.
+// Summary is what the home page and search need to know about a recipe, plus its revision, which tells a
+// device whether the copy of the recipe it saved is still current.
 type Summary struct {
-	Slug   string   `json:"slug"`
-	Title  string   `json:"title"`
-	Folder string   `json:"folder"`
-	Tags   []string `json:"tags"`
-	Serves string   `json:"serves"`
-	Makes  string   `json:"makes"`
-	Time   string   `json:"time"`
+	Slug     string   `json:"slug"`
+	Title    string   `json:"title"`
+	Folder   string   `json:"folder"`
+	Tags     []string `json:"tags"`
+	Serves   string   `json:"serves"`
+	Makes    string   `json:"makes"`
+	Time     string   `json:"time"`
+	Revision string   `json:"revision"`
 }
 
 // Catalog answers GET /api/recipes: every recipe, the collections the home page gives shelves to, and
@@ -71,7 +73,9 @@ func listRecipes(shelf *cards.Shelf) http.Handler {
 	})
 }
 
-// showRecipe answers with one recipe, rendered for its page.
+// showRecipe answers with one recipe, rendered for its page, carrying its revision as the answer's ETag.
+// A device saves the answer, ETag and all, and later compares that ETag with the catalog's revision to
+// decide whether the recipe needs downloading again.
 func showRecipe(shelf *cards.Shelf) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		library, err := shelf.Library()
@@ -86,8 +90,15 @@ func showRecipe(shelf *cards.Shelf) http.Handler {
 			writeJSON(writer, http.StatusNotFound, errorBody{Error: fmt.Sprintf("There's no recipe named %q.", slug)})
 			return
 		}
+		writer.Header().Set("ETag", entityTag(recipe.Revision))
 		writeJSON(writer, http.StatusOK, Detail{Summary: summarize(recipe), Page: recipe.Page})
 	})
+}
+
+// entityTag writes a revision the way an ETag is written, inside double quotes. The service worker writes
+// the catalog's revision the same way before comparing it with the ETag a recipe was saved with.
+func entityTag(revision string) string {
+	return `"` + revision + `"`
 }
 
 // summarize picks out what lists of recipes show.
@@ -99,13 +110,14 @@ func summarize(recipe cards.Recipe) Summary {
 	}
 
 	return Summary{
-		Slug:   recipe.Slug,
-		Title:  recipe.Card.Title,
-		Folder: recipe.Folder,
-		Tags:   tags,
-		Serves: recipe.Card.Serves,
-		Makes:  recipe.Card.Makes,
-		Time:   recipe.Card.Time,
+		Slug:     recipe.Slug,
+		Title:    recipe.Card.Title,
+		Folder:   recipe.Folder,
+		Tags:     tags,
+		Serves:   recipe.Card.Serves,
+		Makes:    recipe.Card.Makes,
+		Time:     recipe.Card.Time,
+		Revision: recipe.Revision,
 	}
 }
 

@@ -1,6 +1,9 @@
 package cards
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -30,6 +33,11 @@ type Recipe struct {
 
 	Card Card
 	Page Page
+
+	// Revision names this version of the recipe: a short hash of everything above, which is everything the
+	// site shows for it. Editing the card moves it, and so does anything that changes how the card renders,
+	// which is how a device knows its saved copy of the recipe is out of date.
+	Revision string
 }
 
 // Library is the recipes folder at one moment: every recipe that loaded, sorted by title, the collections
@@ -101,6 +109,11 @@ func Load(folder string) (Library, error) {
 	// render the markdown now that every name is known, so links to missing recipes can be reported.
 	recipes, problems = renderRecipes(recipes, problems)
 
+	// each recipe is finished now, so each one's revision can be worked out from all of it.
+	for index := range recipes {
+		recipes[index].Revision = revisionOf(recipes[index])
+	}
+
 	// list the recipes by title, the way a person scans for one.
 	sort.SliceStable(recipes, func(left int, right int) bool {
 		leftTitle := strings.ToLower(recipes[left].Card.Title)
@@ -115,6 +128,15 @@ func Load(folder string) (Library, error) {
 	problems = append(problems, collectionProblems...)
 
 	return Library{Recipes: recipes, Collections: collections, Problems: problems}, nil
+}
+
+// revisionOf hashes a finished recipe, before it has a revision of its own, into twelve hex characters.
+// That's 48 bits, far more than a cookbook needs for two versions of a recipe never to share one.
+func revisionOf(recipe Recipe) string {
+	// a recipe is only text, lists and true-or-false, which always encode.
+	encoded, _ := json.Marshal(recipe)
+	sum := sha256.Sum256(encoded)
+	return hex.EncodeToString(sum[:6])
 }
 
 // findCardFiles lists the cards to read: the top level first, so a top-level card keeps its name over a

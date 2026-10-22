@@ -2,6 +2,7 @@ import type { Catalog } from '../types';
 import {
   awayFor,
   catalogPath,
+  changedPaths,
   desktopPatience,
   forgottenPaths,
   isAway,
@@ -145,7 +146,7 @@ const askDesktopFirst = async (
 /**
  * Asks the desktop, saving what it says about the recipes. It's the desktop's answer that's saved, not
  * the page's: the page's comes from this build's own files, which only a new build replaces. A fresh
- * catalog also refreshes every saved recipe, when they're due.
+ * catalog also brings the saved recipes up to date when they're due, downloading only the ones that changed.
  * @param {Request} request The request to pass on.
  * @param {'page' | 'catalog' | 'recipe'} kind What the request is for.
  * @param {Surroundings} surroundings Everything the answer depends on.
@@ -173,7 +174,7 @@ const askDesktop = async (
   {
     desktop.refreshedAt = now();
     const refresh = response.clone().json()
-      .then((catalog: Catalog) => refreshEveryRecipe(catalog, surroundings));
+      .then((catalog: Catalog) => refreshChangedRecipes(catalog, surroundings));
 
     // a desktop that drops out halfway leaves the rest of the copy as it was, which is all that's needed.
     keepAlive(refresh.catch(() => undefined));
@@ -241,9 +242,27 @@ const copyFirst = async (request: Request, surroundings: Surroundings): Promise<
 };
 
 /**
- * Saves every recipe the catalog lists, fresh from the desktop, then forgets the saved ones it no longer
- * lists. Saving them all, rather than only the ones opened at home, is what lets any recipe open
- * anywhere.
+ * Brings the saved recipes in line with a catalog the desktop just sent: downloads each listed recipe whose
+ * saved copy is missing or was saved at another revision, then forgets the saved ones it no longer lists.
+ * Keeping every recipe, rather than only the ones opened at home, is what lets any recipe open anywhere,
+ * and on a visit where no card has changed, it downloads nothing at all.
+ * @param {Catalog} catalog The catalog the desktop just sent.
+ * @param {Surroundings} surroundings Everything the refresh depends on.
+ * @returns {Promise<void>} Resolves when every changed recipe is saved. It fails, forgetting nothing, when
+ * the desktop drops out partway.
+ */
+const refreshChangedRecipes = async (catalog: Catalog, surroundings: Surroundings): Promise<void> =>
+{
+  const listed = recipePaths(catalog);
+  const savedTags = await savedTagsOf(listed, surroundings);
+  await Promise.all(changedPaths(catalog, savedTags).map((path) => saveRecipe(path, surroundings)));
+  await forgetUnlisted(listed, surroundings);
+};
+
+/**
+ * Saves every recipe the catalog lists, fresh from the desktop whatever revision each was saved at, then
+ * forgets the saved ones it no longer lists. A new build does this once as it takes over, because the
+ * desktop may have been updated along with it, in a way that answers an unchanged card differently.
  * @param {Catalog} catalog The catalog the desktop just sent.
  * @param {Surroundings} surroundings Everything the refresh depends on.
  * @returns {Promise<void>} Resolves when every recipe is saved. It fails, forgetting nothing, when the
@@ -251,17 +270,57 @@ const copyFirst = async (request: Request, surroundings: Surroundings): Promise<
  */
 const refreshEveryRecipe = async (catalog: Catalog, surroundings: Surroundings): Promise<void> =>
 {
-  const { origin, recipes } = surroundings;
   const listed = recipePaths(catalog);
   await Promise.all(listed.map((path) => saveRecipe(path, surroundings)));
+  await forgetUnlisted(listed, surroundings);
+};
 
+/**
+ * Reads the ETag each listed recipe was saved with, for the ones that are saved and came with one.
+ * @param {string[]} listed The address of every recipe the catalog lists, without the origin.
+ * @param {Surroundings} surroundings Where the saved recipes are.
+ * @returns {Promise<Map<string, string>>} Each saved recipe's ETag, by address without the origin.
+ */
+const savedTagsOf = async (listed: string[], surroundings: Surroundings): Promise<Map<string, string>> =>
+{
+  const { origin, recipes } = surroundings;
+  const savedTags = new Map<string, string>();
+  await Promise.all(listed.map(async (path) =>
+  {
+    // a recipe never saved has no copy to compare.
+    const saved = await recipes.match(`${origin}${path}`);
+    if (saved === undefined)
+    {
+      return;
+    }
+
+    // a recipe saved by a build from before revisions came without an ETag.
+    const tag = saved.headers.get('ETag');
+    if (tag !== null)
+    {
+      savedTags.set(path, tag);
+    }
+  }));
+  return savedTags;
+};
+
+/**
+ * Forgets the saved recipes a catalog no longer lists, because their cards were deleted or renamed.
+ * @param {string[]} listed The address of every recipe the catalog lists, without the origin.
+ * @param {Surroundings} surroundings Where the saved recipes are.
+ * @returns {Promise<void>} Resolves once they're forgotten.
+ */
+const forgetUnlisted = async (listed: string[], surroundings: Surroundings): Promise<void> =>
+{
+  const { origin, recipes } = surroundings;
   const saved = (await recipes.keys()).map((request) => new URL(request.url).pathname);
   await Promise.all(forgottenPaths(saved, listed).map((path) => recipes.delete(`${origin}${path}`)));
 };
 
 /**
- * Saves one recipe, fresh from the desktop. A recipe that's gone or broken by now keeps whatever copy it
- * had; the next catalog stops listing a gone one, and that's when it's forgotten.
+ * Saves one recipe, fresh from the desktop, along with the ETag naming its revision. A recipe that's gone
+ * or broken by now keeps whatever copy it had; the next catalog stops listing a gone one, and that's when
+ * it's forgotten.
  * @param {string} path The recipe's address, without the origin.
  * @param {Surroundings} surroundings Everything the refresh depends on.
  * @returns {Promise<void>} Resolves once the recipe is saved, or turned out not to be worth saving.
@@ -298,5 +357,5 @@ const refreshEverything = async (surroundings: Surroundings): Promise<void> =>
   await refreshEveryRecipe(await response.json(), surroundings);
 };
 
-export { askDesktopFirst, copyFirst, notSavedYet, refreshEverything, refreshEveryRecipe };
+export { askDesktopFirst, copyFirst, notSavedYet, refreshChangedRecipes, refreshEverything, refreshEveryRecipe };
 export type { DesktopState, SavedCopy, Surroundings };

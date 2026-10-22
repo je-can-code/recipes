@@ -12,7 +12,7 @@ import type { RecipeSummary } from '../../src/types';
  */
 const summary = (slug: string, title: string, folder: string, tags: string[]): RecipeSummary =>
 {
-  return { slug, title, folder, tags, serves: '2', makes: '', time: 'about 10 minutes' };
+  return { slug, title, folder, tags, serves: '2', makes: '', time: 'about 10 minutes', revision: `${slug}-1` };
 };
 
 const steak = summary('steak', 'Steak, Garlic Mash and Asparagus', '', [ 'beef', 'dinner' ]);
