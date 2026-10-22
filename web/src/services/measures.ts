@@ -93,12 +93,19 @@ const untouchable = /^<(?:a|button)\b|^<span class="(?:measured|amount|ref)\b/i;
 const voidElement = /^<(?:br|hr|img|input|wbr)\b/i;
 
 /**
- * An amount in an ingredient line's parentheses: "about 2 limes", "14 to 16 oz", "2 sticks".
+ * The words naming what a count in parentheses counts: one word or a few, stopping before a word like "or" or
+ * "and" that starts another thought, so "(or 2 lemon wedges)" counts the wedges and "(about 2 limes or
+ * 3 lemons)" reads as two counts.
+ */
+const countedWords = String.raw`(?!(?:or|and|of|for|to|with|from)\b)\p{L}+(?:-\p{L}+)*(?:\s+(?!(?:or|and|of|for|to|with|from)\b)\p{L}+(?:-\p{L}+)*)*`;
+
+/**
+ * An amount in an ingredient line's parentheses: "about 2 limes", "14 to 16 oz", "2 small cloves garlic".
  */
 const bracketedAmount = new RegExp(
   String.raw`${numberStart}(?:about\s+)?(?:${numberPattern})(?:\s+to\s+(?:${numberPattern}))?` +
-    String.raw`(?:\s+(?:${unitPattern}|[A-Za-z]+))?(?=[\s,.;:)]|$)`,
-  'gi',
+    String.raw`(?:\s+(?:${unitPattern}|${countedWords}))?(?=[\s,.;:)]|$)`,
+  'giu',
 );
 
 /**
@@ -347,9 +354,10 @@ const measureLeading = (text: string, measure: Measure): string =>
 
 /**
  * The amounts in an ingredient line's parentheses, at a batch size: "(about 2 limes)" doubles at 2x, while a
- * size that says "each", like "(14.5 oz each)", stays put, since every can is still that big. A size that says
- * each is measured as written, so in US measures it reads exactly as the card has it and in metric it only
- * converts. A parenthesis holding a time is always left alone, since a wait never changes with the batch;
+ * size that says "each", like "(14.5 oz each)", stays put, since every can is still that big, and so do a rate
+ * that says "per" or "apiece", like "(16 to 20 per lb)", and a share in percent, like "(60 to 70% cacao)".
+ * Those are measured as written, so in US measures they read exactly as the card has them and in metric they
+ * only convert. A parenthesis holding a time is always left alone, since a wait never changes with the batch;
  * metric still converts any measure in it afterward.
  * @param {string} text Plain text from the line.
  * @param {Measure} measure The batch size and system.
@@ -365,9 +373,9 @@ const measureParentheses = (text: string, measure: Measure): string =>
       return whole;
     }
 
-    // a size that says each is the same for every can, however many there are.
-    const isEach = /\beach\b/i.test(inside);
-    const here = isEach ? { factor: 1, system: measure.system } : measure;
+    // a size for each one, a rate or a percent is the same however many there are.
+    const isFixed = /\b(?:each|per|apiece)\b|%/i.test(inside);
+    const here = isFixed ? { factor: 1, system: measure.system } : measure;
     return `(${inside.replace(bracketedAmount, (written: string) => measureWritten(written, here))})`;
   });
 };
@@ -429,8 +437,8 @@ const pointerAmount = (keyed: KeyedAmount | undefined, key: string, portion: str
   const factor = measure.factor * (portion === '' ? 1 : readNumber(portion));
   const counted = keyed.amount.kind === null ? pointerCount(keyed, key, keyed.amount.high * factor) : '';
 
-  // all of an ingredient, as written, reads exactly as its line does.
-  const shown = isAsWritten(factor, measure.system) ? keyed.written : formatAmount(keyed.amount, factor, measure.system);
+  // all of an ingredient, as written, reads exactly as its line does, but for the capital that opened the line.
+  const shown = isAsWritten(factor, measure.system) ? keyed.written.replace(/^About\b/, 'about') : formatAmount(keyed.amount, factor, measure.system);
   return ` <span class="ref-amount">(${shown}${counted})</span>`;
 };
 

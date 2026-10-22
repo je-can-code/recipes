@@ -86,6 +86,19 @@ describe('findLeadingAmount', () =>
       .toEqual({ amount: { low: 2, high: 2, isAbout: false, kind: null, written: '' }, length: 1 });
   });
 
+  it('counts a handful, like a head or a bunch', () =>
+  {
+    // Arrange.
+    const text = '2 handfuls spinach';
+
+    // Act.
+    const found = findLeadingAmount(text);
+
+    // Assert.
+    expect(found)
+      .toEqual({ amount: { low: 2, high: 2, isAbout: false, kind: null, written: '' }, length: 1 });
+  });
+
   it('finds nothing in a size or a line without a number', () =>
   {
     // Arrange.
@@ -373,6 +386,37 @@ describe('countRest', () =>
       .toEqual([ ' medium Yukon Gold potatoes, diced', ' potato bun', ' egg white', ' can (14.5 oz each) diced tomatoes' ]);
   });
 
+  it('counts a container named first, whatever follows it', () =>
+  {
+    // Arrange.
+    const cases: [ string, number ][] = [
+      [ ' bunch thick scallions', 2 ],
+      [ ' head green leaf lettuce', 2 ],
+      [ ' strip orange peel', 2 ],
+      [ ' big handful mint leaves', 1 ],
+    ];
+
+    // Act.
+    const words = cases.map(([ rest, value ]) => countRest(rest, value));
+
+    // Assert.
+    expect(words)
+      .toEqual([ ' bunches thick scallions', ' heads green leaf lettuce', ' strips orange peel', ' big handful mint leaves' ]);
+  });
+
+  it('leaves a hyphenated word and anything after "of", and reads accented letters', () =>
+  {
+    // Arrange.
+    const cases: [ string, number ][] = [ [ ' flat-leaf parsley', 2 ], [ ' of the oranges', 1 ], [ ' jalapeño', 2 ] ];
+
+    // Act.
+    const words = cases.map(([ rest, value ]) => countRest(rest, value));
+
+    // Assert.
+    expect(words)
+      .toEqual([ ' flat-leaf parsley', ' of the oranges', ' jalapeños' ]);
+  });
+
   it('keeps a capital, knows the irregular plurals, and leaves words it doesn\'t know', () =>
   {
     // Arrange.
@@ -463,6 +507,32 @@ describe('metricWords', () =>
     // Assert.
     expect(converted)
       .toBe('Ladle about 240 ml of broth into a 30 cm skillet, cut 1.5 cm cubes, and use a 5.7 L pot.');
+  });
+
+  it('converts a pan size written as a pair, and gives a changed number the article it needs', () =>
+  {
+    // Arrange.
+    const text = 'Use a 9 by 13-inch dish, an 8-inch square pan, a 9x5-inch loaf pan or a 3-inch ring.';
+
+    // Act.
+    const converted = metricWords(text);
+
+    // Assert.
+    expect(converted)
+      .toBe('Use a 23 by 33 cm dish, a 20 cm square pan, a 23 by 13 cm loaf pan or an 8 cm ring.');
+  });
+
+  it('keeps a capital article capital', () =>
+  {
+    // Arrange.
+    const text = 'An 8-inch pan works, and A 3-inch ring too.';
+
+    // Act.
+    const converted = metricWords(text);
+
+    // Assert.
+    expect(converted)
+      .toBe('A 20 cm pan works, and An 8 cm ring too.');
   });
 
   it('leaves spoons, rice cooker cups and times alone', () =>

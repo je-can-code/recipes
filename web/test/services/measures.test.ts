@@ -268,6 +268,20 @@ describe('withMeasures', () =>
       ]);
   });
 
+  it('shows a pointer at a line that opens with About in lowercase', () =>
+  {
+    // Arrange.
+    const water = gravy({ ingredients: [ { name: '', items: [ 'About 16 cups water' ], keys: [ 'water' ], after: '' } ] });
+    const recipe = withStep(water, pointer('water', '', 'the water'));
+
+    // Act.
+    const measured = withMeasures(recipe, { factor: 1, system: 'us' });
+
+    // Assert.
+    expect(measured.method.steps[0].text)
+      .toBe('<span class="ref">the water <span class="ref-amount">(about 16 cups)</span></span>');
+  });
+
   it('names what a pointer\'s count counts, unless its key already does', () =>
   {
     // Arrange.
@@ -386,6 +400,35 @@ describe('withMeasures', () =>
         '<span class="measured">2</span> cans (14.5 oz each) diced tomatoes',
         '<span class="measured">1/2 cup</span> lime juice (about 4 limes)',
       ]);
+  });
+
+  it('leaves amounts in parentheses that give a rate or a percent', () =>
+  {
+    // Arrange.
+    const recipe = withItems([ '12 large shrimp (16 to 20 per lb)', '4 oz dark chocolate (60 to 70% cacao)' ]);
+
+    // Act.
+    const measured = withMeasures(recipe, { factor: 2, system: 'us' });
+
+    // Assert.
+    expect(measured.ingredients[0].items)
+      .toEqual([
+        '<span class="measured">24</span> large shrimp (16 to 20 per lb)',
+        '<span class="measured">8 oz</span> dark chocolate (60 to 70% cacao)',
+      ]);
+  });
+
+  it('counts every word a count in parentheses names, so the right one changes', () =>
+  {
+    // Arrange.
+    const recipe = withItems([ '1/4 cup lime juice (or 2 lemon wedges)' ]);
+
+    // Act.
+    const measured = withMeasures(recipe, { factor: 2, system: 'us' });
+
+    // Assert.
+    expect(measured.ingredients[0].items)
+      .toEqual([ '<span class="measured">1/2 cup</span> lime juice (or 4 lemon wedges)' ]);
   });
 
   it('converts a size that says each in metric, without scaling it', () =>

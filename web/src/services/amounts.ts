@@ -14,7 +14,8 @@ type MeasureSystem = 'us' | 'metric';
 
 /**
  * What a measuring word measures. Each kind rounds its own way and turns into its own thing in metric. A
- * pinch stands for the measures too small to scale: pinches, dashes, splashes, handfuls and drops.
+ * pinch stands for the measures too small to scale: pinches, dashes, splashes and drops. A handful is counted
+ * instead, like a head or a bunch, since a handful of greens grows with the batch.
  */
 type UnitKind =
   | 'tsp'
@@ -106,7 +107,6 @@ const unitPattern = [
   'pinch(?:es)?',
   'dash(?:es)?',
   'splash(?:es)?',
-  'handfuls?',
   'drops?',
 ].join('|');
 
@@ -141,7 +141,7 @@ const unitKinds: [ RegExp, UnitKind ][] = [
   [ /^inch(?:es)?$/i, 'inch' ],
   [ /^cm$/i, 'cm' ],
   [ /^mm$/i, 'mm' ],
-  [ /^(?:pinch(?:es)?|dash(?:es)?|splash(?:es)?|handfuls?|drops?)$/i, 'pinch' ],
+  [ /^(?:pinch(?:es)?|dash(?:es)?|splash(?:es)?|drops?)$/i, 'pinch' ],
 ];
 
 /**
@@ -254,56 +254,204 @@ const metricFactors: Partial<Record<UnitKind, [ number, 'ml' | 'g' | 'cm' ]>> = 
  */
 const countNouns: [ string, string ][] = [
   [ 'apple', 'apples' ],
+  [ 'avocado', 'avocados' ],
   [ 'bag', 'bags' ],
+  [ 'baguette', 'baguettes' ],
+  [ 'ball', 'balls' ],
   [ 'banana', 'bananas' ],
+  [ 'bar', 'bars' ],
+  [ 'basket', 'baskets' ],
+  [ 'batch', 'batches' ],
+  [ 'bean', 'beans' ],
   [ 'berry', 'berries' ],
+  [ 'biscuit', 'biscuits' ],
   [ 'block', 'blocks' ],
+  [ 'bomb', 'bombs' ],
+  [ 'bottle', 'bottles' ],
+  [ 'bowl', 'bowls' ],
   [ 'box', 'boxes' ],
   [ 'breast', 'breasts' ],
+  [ 'bulb', 'bulbs' ],
   [ 'bun', 'buns' ],
   [ 'bunch', 'bunches' ],
+  [ 'bundle', 'bundles' ],
+  [ 'camembert', 'camemberts' ],
   [ 'can', 'cans' ],
+  [ 'cantaloupe', 'cantaloupes' ],
   [ 'carrot', 'carrots' ],
+  [ 'cherry', 'cherries' ],
+  [ 'chestnut', 'chestnuts' ],
+  [ 'chile', 'chiles' ],
+  [ 'chili', 'chilies' ],
+  [ 'chive', 'chives' ],
   [ 'chop', 'chops' ],
+  [ 'chopstick', 'chopsticks' ],
+  [ 'circle', 'circles' ],
   [ 'clove', 'cloves' ],
+  [ 'collar', 'collars' ],
+  [ 'container', 'containers' ],
+  [ 'cookie', 'cookies' ],
+  [ 'crepe', 'crepes' ],
+  [ 'croquette', 'croquettes' ],
+  [ 'cube', 'cubes' ],
   [ 'cucumber', 'cucumbers' ],
+  [ 'cup', 'cups' ],
+  [ 'date', 'dates' ],
+  [ 'dish', 'dishes' ],
+  [ 'duck', 'ducks' ],
+  [ 'dumpling', 'dumplings' ],
+  [ 'ear', 'ears' ],
   [ 'egg', 'eggs' ],
+  [ 'eggplant', 'eggplants' ],
+  [ 'envelope', 'envelopes' ],
   [ 'fillet', 'fillets' ],
+  [ 'glass', 'glasses' ],
+  [ 'half', 'halves' ],
+  [ 'handful', 'handfuls' ],
   [ 'head', 'heads' ],
   [ 'heart', 'hearts' ],
+  [ 'hen', 'hens' ],
+  [ 'hollow', 'hollows' ],
+  [ 'jalapeño', 'jalapeños' ],
   [ 'jar', 'jars' ],
+  [ 'kiwi', 'kiwis' ],
   [ 'leaf', 'leaves' ],
+  [ 'leek', 'leeks' ],
+  [ 'leg', 'legs' ],
   [ 'lemon', 'lemons' ],
   [ 'lime', 'limes' ],
   [ 'loaf', 'loaves' ],
+  [ 'mango', 'mangoes' ],
+  [ 'marshmallow', 'marshmallows' ],
+  [ 'melon', 'melons' ],
+  [ 'mug', 'mugs' ],
+  [ 'mushroom', 'mushrooms' ],
+  [ 'nest', 'nests' ],
+  [ 'nut', 'nuts' ],
+  [ 'one', 'ones' ],
   [ 'onion', 'onions' ],
   [ 'orange', 'oranges' ],
+  [ 'oval', 'ovals' ],
+  [ 'oyster', 'oysters' ],
   [ 'pack', 'packs' ],
   [ 'package', 'packages' ],
+  [ 'packet', 'packets' ],
+  [ 'pair', 'pairs' ],
+  [ 'pancake', 'pancakes' ],
+  [ 'pat', 'pats' ],
   [ 'patty', 'patties' ],
+  [ 'pear', 'pears' ],
   [ 'pepper', 'peppers' ],
+  [ 'peppercorn', 'peppercorns' ],
+  [ 'person', 'people' ],
   [ 'piece', 'pieces' ],
+  [ 'pineapple', 'pineapples' ],
+  [ 'plate', 'plates' ],
+  [ 'pod', 'pods' ],
+  [ 'pomegranate', 'pomegranates' ],
   [ 'portion', 'portions' ],
   [ 'potato', 'potatoes' ],
+  [ 'rabbit', 'rabbits' ],
+  [ 'rack', 'racks' ],
+  [ 'radish', 'radishes' ],
+  [ 'ramekin', 'ramekins' ],
+  [ 'raspberry', 'raspberries' ],
   [ 'rib', 'ribs' ],
+  [ 'ribeye', 'ribeyes' ],
   [ 'rind', 'rinds' ],
+  [ 'roll', 'rolls' ],
   [ 'root', 'roots' ],
+  [ 'rosebud', 'rosebuds' ],
+  [ 'round', 'rounds' ],
+  [ 'russet', 'russets' ],
+  [ 'sac', 'sacs' ],
+  [ 'sapodilla', 'sapodillas' ],
+  [ 'sausage', 'sausages' ],
   [ 'scallion', 'scallions' ],
   [ 'scallop', 'scallops' ],
+  [ 'scoop', 'scoops' ],
   [ 'shallot', 'shallots' ],
   [ 'sheet', 'sheets' ],
+  [ 'shell', 'shells' ],
+  [ 'skewer', 'skewers' ],
   [ 'slice', 'slices' ],
+  [ 'soybean', 'soybeans' ],
+  [ 'spear', 'spears' ],
+  [ 'spoonful', 'spoonfuls' ],
   [ 'sprig', 'sprigs' ],
+  [ 'sprout', 'sprouts' ],
   [ 'square', 'squares' ],
   [ 'stalk', 'stalks' ],
   [ 'steak', 'steaks' ],
   [ 'stick', 'sticks' ],
+  [ 'straw', 'straws' ],
+  [ 'strawberry', 'strawberries' ],
   [ 'strip', 'strips' ],
+  [ 'tablespoon', 'tablespoons' ],
+  [ 'tail', 'tails' ],
+  [ 'tangerine', 'tangerines' ],
   [ 'thigh', 'thighs' ],
+  [ 'thread', 'threads' ],
   [ 'tomato', 'tomatoes' ],
+  [ 'toothpick', 'toothpicks' ],
   [ 'tortilla', 'tortillas' ],
+  [ 'tray', 'trays' ],
+  [ 'triangle', 'triangles' ],
+  [ 'turnip', 'turnips' ],
+  [ 'wedge', 'wedges' ],
   [ 'white', 'whites' ],
+  [ 'wing', 'wings' ],
+  [ 'wonton', 'wontons' ],
+  [ 'wrapper', 'wrappers' ],
   [ 'yolk', 'yolks' ],
+];
+
+/**
+ * The counted things that hold or measure out something else, like the bunch in "1 bunch scallions" or the
+ * strip in "1 strip orange peel". When one comes first, it's what the count counts, whatever follows it.
+ */
+const containerNouns = [
+  'bag',
+  'bar',
+  'basket',
+  'block',
+  'bottle',
+  'bowl',
+  'box',
+  'bunch',
+  'bundle',
+  'can',
+  'clove',
+  'container',
+  'cup',
+  'ear',
+  'envelope',
+  'glass',
+  'handful',
+  'head',
+  'jar',
+  'loaf',
+  'mug',
+  'pack',
+  'package',
+  'packet',
+  'pair',
+  'piece',
+  'plate',
+  'rack',
+  'sac',
+  'scoop',
+  'sheet',
+  'slice',
+  'spoonful',
+  'sprig',
+  'square',
+  'stalk',
+  'stick',
+  'strip',
+  'tablespoon',
+  'tray',
+  'wedge',
 ];
 
 /**
@@ -312,10 +460,11 @@ const countNouns: [ string, string ][] = [
 const indivisibleNouns = [ 'egg', 'yolk', 'white' ];
 
 /**
- * Where the words naming a counted thing end: a parenthesis, a comma or semicolon, or an "or", "and" or
- * "for" that starts another thought.
+ * Where the words naming a counted thing end: a parenthesis, a comma or semicolon, or an "or", "and", "for" or
+ * "of" that starts another thought. So "2 of the oranges" counts nothing the page needs to change, and "2 heads
+ * of garlic" counts the heads.
  */
-const nounWindowEnd = /[(,;]|\s(?:or|and|for)\s/;
+const nounWindowEnd = /[(,;]|\s(?:or|and|for|of)\s/;
 
 /**
  * A temperature in Fahrenheit, or a range of them.
@@ -330,6 +479,21 @@ const usMeasure = new RegExp(
   String.raw`${numberStart}(${numberPattern})(?:\s+to\s+(${numberPattern}))?(-|\s+)(cups?|fl\.? oz|ounces?|oz|pounds?|lbs?|pints?|quarts?|gallons?|inch(?:es)?)\b`,
   'gi',
 );
+
+/**
+ * A pan's size in inches written as a pair, "9 by 13-inch" or "9x5-inch", whose numbers both convert, where
+ * converting only the inches next to the unit would leave "9 by 33 cm".
+ */
+const inchPair = new RegExp(
+  String.raw`${numberStart}(${numberPattern})\s*(?:by|x)\s*(${numberPattern})(?:-|\s+)inch(?:es)?\b`,
+  'gi',
+);
+
+/**
+ * "a" or "an" in front of a number, which converting the number can make wrong: "an 8-inch pan" is "a 20 cm
+ * pan", and "a 3-inch ring" is "an 8 cm ring".
+ */
+const articleBeforeNumber = /\b(a|an)(\s+)(\d[\d.]*)/gi;
 
 /**
  * Turns a written number into its value: "1 1/2" is 1.5, "1/2" is 0.5 and "5" is 5.
@@ -599,7 +763,7 @@ const formatAmount = (amount: Amount, factor: number, system: MeasureSystem): st
     return `${about}${joinRange(kitchenNumber(low, roundingFractions.count), kitchenNumber(high, roundingFractions.count))}`;
   }
 
-  // a pinch, a dash or a handful keeps the card's own word, since they're all one kind to the page.
+  // a pinch, a dash or a drop keeps the card's own word, since they're all one kind to the page.
   if (amount.kind === 'pinch')
   {
     return `${about}${joinRange(kitchenNumber(low, roundingFractions.pinch), kitchenNumber(high, roundingFractions.pinch))} ${amount.written}`;
@@ -673,9 +837,10 @@ const joinMetric = (low: string, high: string): string =>
 };
 
 /**
- * Finds the thing a count counts: the last word the page knows how to pluralize, among the words before the
- * first parenthesis, comma, or "or", "and" or "for". The last one, so "2 potato buns" counts buns and "2 egg
- * whites" counts whites.
+ * Finds the thing a count counts, among the words before the first parenthesis, comma, or "or", "and", "for"
+ * or "of": a container the page knows, like the bunch in "1 bunch scallions", when one comes first, and
+ * otherwise the last word it knows how to pluralize, so "2 potato buns" counts buns and "2 egg whites" counts
+ * whites. A hyphenated word is read whole, so "flat-leaf" stays as it is.
  * @param {string} rest The words after the count, like " medium Yukon Gold potatoes, diced".
  * @returns {{ index: number, word: string, singular: string, plural: string } | null} Where the word is in
  * rest, the word as written, and its two forms, or null when there isn't one.
@@ -684,17 +849,23 @@ const countedNoun = (rest: string): { index: number; word: string; singular: str
 {
   const end = rest.search(nounWindowEnd);
   const window = end === -1 ? rest : rest.slice(0, end);
-  const words = [ ...window.matchAll(/[A-Za-z]+/g) ].reverse();
-  for (const word of words)
-  {
-    const lower = word[0].toLowerCase();
-    const forms = countNouns.find(([ singular, plural ]) => singular === lower || plural === lower);
-    if (forms !== undefined)
+
+  // every word the page knows, in order, reading a hyphenated word whole, so "flat-leaf" is never a leaf.
+  const known = [ ...window.matchAll(/\p{L}+(?:-\p{L}+)*/gu) ]
+    .flatMap((word) =>
     {
-      return { index: word.index, word: word[0], singular: forms[0], plural: forms[1] };
-    }
+      const lower = word[0].toLowerCase();
+      const forms = countNouns.find(([ singular, plural ]) => singular === lower || plural === lower);
+      return forms === undefined ? [] : [ { index: word.index, word: word[0], singular: forms[0], plural: forms[1] } ];
+    });
+
+  // a container named first is what's counted; otherwise the last word is.
+  const container = known.find((noun) => containerNouns.includes(noun.singular));
+  if (container !== undefined)
+  {
+    return container;
   }
-  return null;
+  return known.length === 0 ? null : known[known.length - 1];
 };
 
 /**
@@ -731,18 +902,23 @@ const isIndivisible = (rest: string): boolean =>
 
 /**
  * Converts the temperatures and US measures written into a sentence: 350°F is 175°C, "1 cup of broth" is
- * "240 ml of broth", and a "12-inch skillet" is a "30 cm skillet". Ovens round to 5 degrees and thermometers
- * to 1. Spoons and rice cooker cups stay as they are.
+ * "240 ml of broth", a "12-inch skillet" is a "30 cm skillet", and a "9 by 13-inch dish" is a "23 by 33 cm
+ * dish". Ovens round to 5 degrees and thermometers to 1. Spoons and rice cooker cups stay as they are. A
+ * number that changed gets the article it now needs, so "an 8-inch pan" is "a 20 cm pan".
  * @param {string} text Plain text from between two tags.
  * @returns {string} The text in metric.
  */
 const metricWords = (text: string): string =>
 {
-  return text
+  const converted = text
     .replace(fahrenheit, (_whole: string, low: string, high: string | undefined) =>
     {
       const range = high === undefined ? `${celsius(Number(low))}` : `${celsius(Number(low))} to ${celsius(Number(high))}`;
       return `${range}°C`;
+    })
+    .replace(inchPair, (_whole: string, first: string, second: string) =>
+    {
+      return joinPair(inchesInMetric(first), inchesInMetric(second));
     })
     .replace(usMeasure, (_whole: string, low: string, high: string | undefined, _gap: string, unit: string) =>
     {
@@ -755,6 +931,50 @@ const metricWords = (text: string): string =>
       };
       return formatAmount(amount, 1, 'metric');
     });
+
+  // a number that changed may need the other article.
+  return converted.replace(articleBeforeNumber, (_whole: string, article: string, gap: string, number: string) =>
+  {
+    return `${articleFor(number, article)}${gap}${number}`;
+  });
+};
+
+/**
+ * A length in inches, written in metric: "9" is "23 cm" and "1/8" is "3 mm".
+ * @param {string} written The number of inches, as written.
+ * @returns {string} The length in metric, with its unit.
+ */
+const inchesInMetric = (written: string): string =>
+{
+  const value = readNumber(written);
+  return formatAmount({ low: value, high: value, isAbout: false, kind: 'inch', written: 'inch' }, 1, 'metric');
+};
+
+/**
+ * Joins the two sides of a size the way the card wrote it, "23 by 33 cm", or with both units when they
+ * differ, "3 mm by 5 cm".
+ * @param {string} first The first side, with its unit.
+ * @param {string} second The second side, with its unit.
+ * @returns {string} The size.
+ */
+const joinPair = (first: string, second: string): string =>
+{
+  const [ firstNumber, firstUnit ] = first.split(' ');
+  const [ , secondUnit ] = second.split(' ');
+  return firstUnit === secondUnit ? `${firstNumber} by ${second}` : `${first} by ${second}`;
+};
+
+/**
+ * The article a number takes: "an" for one that's said starting with a vowel sound, like 8, 11, 18 or 80,
+ * and "a" for every other, keeping the article's own capital.
+ * @param {string} number The number, as written.
+ * @param {string} article The article in front of it, "a" or "an" in any case.
+ * @returns {string} The article it needs.
+ */
+const articleFor = (number: string, article: string): string =>
+{
+  const wanted = /^(?:8|11(?!\d)|18(?!\d))/.test(number) ? 'an' : 'a';
+  return article[0] === 'A' ? `A${wanted.slice(1)}` : wanted;
 };
 
 /**
