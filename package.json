@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run scripts/dev.ts",
-    "build": "bun run typecheck && bunx --bun vite build && bun scripts/build-worker.ts && cd server && go build -o ../bin/recipes ./cmd/recipes",
+    "build": "bun run typecheck && bunx --bun vite build && bun scripts/build-worker.ts && bun scripts/build-server.ts",
     "start": "./bin/recipes -config config.yaml",
     "deploy": "bun run build && systemctl --user restart recipes",
     "check": "cd server && go run ./cmd/recipes check -config ../config.yaml",
